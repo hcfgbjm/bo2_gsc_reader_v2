@@ -23,18 +23,18 @@ typedef struct _includeStruct
 
 typedef struct _animReference
 {
-	DWORD name; // Name of the anim (example: veh_car_destroy from mp_vehicles)
-	DWORD reference; // A relative pointer to the code that references this anim
+	DWORD name;			// 0x00 - Name of the anim (example: veh_car_destroy from mp_vehicles)
+	DWORD reference;	// 0x04 - A relative pointer to the code that references this anim
 } animReference;
 
 // scrAnimPub
 
 typedef struct _usinganimtreeStruct
 {
-	WORD name; // A relative pointer to the name of this animtree
-	WORD numOfReferences;
-	WORD numOfAnimReferences; // Amount of references of anims contained in the animtree
-	WORD null1; // Not sure if it's always null, will check later
+	WORD name;					// 0x00 - A relative pointer to the name of this animtree
+	WORD numOfReferences;		// 0x02 -
+	WORD numOfAnimReferences;	// 0x04 - Amount of references of anims contained in the animtree
+	WORD null1;					// 0x06 - Not sure if it's always null, will check later
 	/*
 		NOTE: This is included in this struct, but as we can't create dynamic structs, we just create another struct which will be used dynamically in the code
 		DWORD references[numOfReferences];	//	Relative pointers that point to code that references this animtree (the game writes the
@@ -59,9 +59,9 @@ typedef struct _usinganimtreeStruct
 // This struct is used to get information about a string in the gsc and allocate it properly in the game's memory
 typedef struct _gscString
 {
-	WORD string; // A relative pointer to the string
-	BYTE numOfReferences; // Amount of references to this string
-	BYTE type; // Can only be 0 or 1
+	WORD string;			// 0x00 - A relative pointer to the string
+	BYTE numOfReferences;	// 0x02 - Amount of references to this string
+	BYTE type;				// 0x04 - Can only be 0 or 1
 	/*
 		NOTE: This is included in this struct, but as we can't create dynamic structs, we just create another struct which will be used dynamically in the code
 		DWORD references[numOfReferences];	//	Relative pointers that point to code that references this string (the game writes a
@@ -71,11 +71,11 @@ typedef struct _gscString
 
 typedef struct _gscFunction
 {
-	DWORD crc32; // crc32 of function bytecode
-	DWORD start; // A relative pointer to the GSC bytecode start of this function
-	WORD name; // A relative pointer to the name of this function
-	BYTE numOfParameters;
-	BYTE flag;
+	DWORD crc32;			// 0x00 - CRC32 of function bytecode
+	DWORD start;			// 0x04 - A relative pointer to the GSC bytecode start of this function
+	WORD name;				// 0x08 - A relative pointer to the name of this function
+	BYTE numOfParameters;	// 0x0A -
+	BYTE flag;				// 0x0B -
 	/*
 		Possible flag values (not sure if all of them):
 
@@ -122,11 +122,11 @@ typedef struct _gscFunction
 // functions imported by the gsc (not the functions in the gsc)
 typedef struct _externalFunction
 {
-	WORD name; // A relative pointer to the name of this function
-	WORD gscOfFunction; // GSC of the function, example: maps/mp/gametypes/_hud::fontpulse (gscOfFunction::name)
-	WORD numOfReferences;
-	BYTE numOfParameters;
-	BYTE flag;
+	WORD name;				// 0x00 - A relative pointer to the name of this function
+	WORD gscOfFunction;		// 0x02 - GSC of the function, example: maps/mp/gametypes/_hud::fontpulse (gscOfFunction::name)
+	WORD numOfReferences;	// 0x04 -
+	BYTE numOfParameters;	// 0x06 - Function parameter count
+	BYTE flag;				// 0x07 - 
 	/*
 		Possible flag values (not sure if all of them):
 
@@ -142,29 +142,36 @@ typedef struct _externalFunction
 	*/
 } externalFunction;
 
+// Replaces bytes in a GSC file at load time
+struct gscRelocation
+{
+	DWORD offset;	// 0x00 - File offset (where to replace the bytes)
+	DWORD value;	// 0x04 - Value of bytes to be inserted
+};
+
 // RVA
 // means that you need to make *gsc_allocated_ptr* + THIS_COD9_GSC->...
 // example: char* gsc_name = (char*)((DWORD)THIS_COD9_GSC + THIS_COD9_GSC->name)
 typedef struct _COD9_GSC
 {
-	BYTE identifier[8]; // It's the same always
-	BYTE unknown1[4]; // I think it's some kind of checksum
-	DWORD includeStructs; // A relative pointer to an array of includeStruct structs, amount = numOfIncludes
-	DWORD usinganimtreeStructs; // A relative pointer to an array of usinganimtreeStruct structs, amount = numOfUsinganimtree
-	BYTE unknown2[4];
-	DWORD gscStrings; // A relative pointer to an array of gscString structs, amount = numOfReferencedStrings
-	DWORD gscFunctions; // A relative pointer to an array of gscFunction structs, amount = numOfFunctions
-	DWORD externalFunctions; // A relative pointer to an array of externalFunction structs, amount = numOfExternalFunctions
-	DWORD unknown1_1; // Used firstly in the gsc loading function
-	DWORD size;
-	BYTE unknown3[4];
-	WORD name; // A relative pointer to the name of this gsc (with full path and extension, null terminated)
-	WORD numOfStrings; // IMPORTANT: Includes everything except #include strings, #using_animtree strings and function name strings
-	WORD numOfFunctions;
-	WORD numOfExternalFunctions;
-	WORD unknown1_2;
-	BYTE unknown4[2];
-	BYTE numOfIncludes;
-	BYTE numOfUsinganimtree;
-	BYTE null1[2]; // Not sure if it's always null, will check later
+	BYTE identifier[8];			// 0x00 - It's the same always
+	BYTE unknown1[4];			// 0x08 - I think it's some kind of checksum
+	DWORD includeStructs;		// 0x0C - A relative pointer to an array of includeStruct structs, amount = numOfIncludes
+	DWORD usinganimtreeStructs; // 0x10 - A relative pointer to an array of usinganimtreeStruct structs, amount = numOfUsinganimtree
+	BYTE unknown2[4];			// 0x14 - ?
+	DWORD gscStrings;			// 0x18 - A relative pointer to an array of gscString structs, amount = numOfStrings
+	DWORD gscFunctions;			// 0x1C - A relative pointer to an array of gscFunction structs, amount = numOfFunctions
+	DWORD externalFunctions;	// 0x20 - A relative pointer to an array of externalFunction structs, amount = numOfExternalFunctions
+	DWORD gscRelocations;		// 0x24 - A relative pointer to an array of gscRelocation structs, amount = numOfRelocations
+	DWORD size;					// 0x28 -
+	BYTE unknown3[4];			// 0x2C - ?
+	WORD name;					// 0x30 - A relative pointer to the name of this gsc (with full path and extension, null terminated)
+	WORD numOfStrings;			// 0x32 - IMPORTANT: Includes everything except #include strings, #using_animtree strings and function name strings
+	WORD numOfFunctions;		// 0x34 - Number of functions in this script file
+	WORD numOfExternalFunctions;// 0x36 - 
+	WORD numOfRelocations;		// 0x38 - Number of patches in the GSC code/file
+	BYTE unknown4[2];			// 0x3A - ?
+	BYTE numOfIncludes;			// 0x3C - Number of included source files
+	BYTE numOfUsinganimtree;	// 0x3B - Number of included animation trees
+	BYTE null1[2];				// 0x3D - Not sure if it's always null, will check later
 } COD9_GSC; // size: 64 bytes
