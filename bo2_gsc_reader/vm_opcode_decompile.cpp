@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool opcode_dec = true;
+bool opcode_dec = false;
 
 // 0x0
 BYTE* OP_End_Decompile(DWORD gscBuffer, BYTE* opcodesPtr, bool functionEnd)
@@ -549,7 +549,7 @@ BYTE* OP_ClearArray_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	AddString("%s[%s] = undefined; // Correct?\n", true, VariableNameBuffer, StackGetLastValue());
+	AddString("%s[%s] = undefined;\n", true, VariableNameBuffer, StackGetLastValue());
 
 	StackPop();
 
@@ -1210,9 +1210,11 @@ BYTE* OP_inc_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	AddString("// OP_PreScriptCall();", true);
+	AddString("// OP_inc();", true);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
+
+	AddString("%s++;\n", true, VariableNameBuffer);
 
 	return currentPos;
 }
@@ -1224,9 +1226,11 @@ BYTE* OP_dec_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	AddString("// OP_PreScriptCall();", true);
+	AddString("// OP_dec();", true);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
+
+	AddString("%s--;\n", true, VariableNameBuffer);
 
 	return currentPos;
 }
