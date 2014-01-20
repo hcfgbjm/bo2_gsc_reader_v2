@@ -37,8 +37,8 @@ typedef enum
 	OP_GetAnimation = 0x13,
 	OP_GetGameRef = 0x14,
 	OP_GetFunction = 0x15,
-	//OP_CreateLocalVariable = 0x16, // looks like its true
-	OP_CreateLocalVariable = 0x17,
+	OP_CreateLocalVariable = 0x16, // looks like its true
+	OP_CreateLocalVariables = 0x17,
 	OP_RemoveLocalVariables = 0x18,
 	OP_EvalLocalVariableCached = 0x19, // NOT SURE, THIS IS STRAAAAAAANGE
 	OP_EvalArray = 0x1A,
@@ -132,10 +132,10 @@ typedef enum
 	OP_getdvarint = 0x69, // returns an int
 	OP_getdvarfloat = 0x6A, // returns a float
 	OP_getdvarvector = 0x6B, // returns a 3d vector
-	OP_getdvarcoloralpha = 0x6C, // not sure about those getdvarcolor*, _art.gsc contains calls to those, so i will check it later
-	OP_getdvarcolorred = 0x6D,
-	OP_getdvarcolorgreen = 0x6E,
-	OP_getdvarcolorblue = 0x6F,
+	OP_getdvarcolorred = 0x6C,
+	OP_getdvarcolorgreen = 0x6D,
+	OP_getdvarcolorblue = 0x6E,
+	OP_getdvarcoloralpha = 0x6F,
 
 	OP_GetFirstArrayKey = 0x70,
 	OP_GetNextArrayKey = 0x71,
@@ -143,6 +143,7 @@ typedef enum
 
 	OP_GetUndefined2 = 0x73, // does the same thing as OP_GetUndefined
 
+	// OP_DecTop2 ? - when var is not type_codePos
 	// OP_Unknown74 = 0x74,
 
 	OP_NOP = 0x75,
@@ -150,6 +151,7 @@ typedef enum
 	OP_object = 0x77,
 	OP_thread_object = 0x78, // not sure
 
+	// OP_EvalLocalVariable ?
 	// OP_Unknown79 = 0x79,
 
 	OP_EvalLocalVariableRef = 0x7A, // not sure

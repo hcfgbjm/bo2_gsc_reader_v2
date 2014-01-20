@@ -66,8 +66,11 @@ BYTE* OP_GetGameRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 // 0x15
 BYTE* OP_GetFunction_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
-// 0x17
+// 0x16
 BYTE* OP_CreateLocalVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x17
+BYTE* OP_CreateLocalVariables_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x19
 BYTE* OP_EvalLocalVariableCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);

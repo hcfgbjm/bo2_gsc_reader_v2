@@ -15,7 +15,7 @@ void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 	{
 		AddString(" ", false);
 
-		if (*(BYTE*)(gscBuffer + gscFunc->start) != OP_CreateLocalVariable)
+		if (*(BYTE*)(gscBuffer + gscFunc->start) != OP_CreateLocalVariables)
 		{
 			AddString("/* Error: Parameter decompilation failed (first opcode isn't OP_CreateLocalVariable) */", false);
 			goto end_param_decompilation;
@@ -146,6 +146,9 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 			break;
 		case OP_CreateLocalVariable:
 			opcodesPtr = OP_CreateLocalVariable_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_CreateLocalVariables:
+			opcodesPtr = OP_CreateLocalVariables_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_EvalLocalVariableCached:
 			opcodesPtr = OP_EvalLocalVariableCached_Decompile(gscBuffer, opcodesPtr);

@@ -426,8 +426,23 @@ BYTE* OP_GetFunction_Decompile(DWORD gscBuffer, BYTE* opcodesPtr) // is this a s
 	return currentPos;
 }
 
-// 0x17
+// 0x16
 BYTE* OP_CreateLocalVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	if (opcode_dec) {
+		AddString("// OP_CreateLocalVariable( ); ", true);
+	}
+
+	AddString("// Error: Unknown opcode \"OP_CreateLocalVariable\"", true);
+
+	return currentPos;
+}
+
+// 0x17
+BYTE* OP_CreateLocalVariables_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
@@ -1448,6 +1463,8 @@ BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 // 0x59
 BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
+	opcodesPtr += 1;// opcode size 1 byte
+
 	DWORD caseTableInfo = (DWORD)GET_ALIGNED_DWORD(opcodesPtr);
 	BYTE *currentPos	= GET_ALIGNED_DWORD((BYTE *)(*(DWORD *)caseTableInfo + caseTableInfo + 4));
 
@@ -1493,7 +1510,8 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 // 0x5A
 BYTE *OP_endswitch_Decompile(DWORD gscBuffer, BYTE *opcodesPtr)
 {
-	BYTE *currentPos = GET_ALIGNED_DWORD(opcodesPtr + 4);
+	opcodesPtr += 1;// opcode size 1 byte
+	BYTE *currentPos = GET_ALIGNED_DWORD(opcodesPtr);
 
 	int caseCount = *(int *)currentPos;
 
