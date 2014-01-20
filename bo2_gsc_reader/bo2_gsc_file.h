@@ -145,8 +145,8 @@ typedef struct _externalFunction
 // Replaces bytes in a GSC file at load time
 struct gscRelocation
 {
-	DWORD offset;	// 0x00 - File offset (where to replace the bytes)
 	DWORD value;	// 0x04 - Value of bytes to be inserted
+	DWORD offset;	// 0x00 - File offset (where to replace the bytes)
 };
 
 // RVA
@@ -158,20 +158,20 @@ typedef struct _COD9_GSC
 	BYTE unknown1[4];			// 0x08 - I think it's some kind of checksum
 	DWORD includeStructs;		// 0x0C - A relative pointer to an array of includeStruct structs, amount = numOfIncludes
 	DWORD usinganimtreeStructs; // 0x10 - A relative pointer to an array of usinganimtreeStruct structs, amount = numOfUsinganimtree
-	BYTE unknown2[4];			// 0x14 - ?
+	DWORD codeSectionStart;		// 0x14 - A relative pointer to where the GSC bytecode starts (gscFunctions)
 	DWORD gscStrings;			// 0x18 - A relative pointer to an array of gscString structs, amount = numOfStrings
 	DWORD gscFunctions;			// 0x1C - A relative pointer to an array of gscFunction structs, amount = numOfFunctions
 	DWORD externalFunctions;	// 0x20 - A relative pointer to an array of externalFunction structs, amount = numOfExternalFunctions
 	DWORD gscRelocations;		// 0x24 - A relative pointer to an array of gscRelocation structs, amount = numOfRelocations
 	DWORD size;					// 0x28 -
-	BYTE unknown3[4];			// 0x2C - ?
+	DWORD codeSectionSize;		// 0x2C - Size of the executable bytecode
 	WORD name;					// 0x30 - A relative pointer to the name of this gsc (with full path and extension, null terminated)
 	WORD numOfStrings;			// 0x32 - IMPORTANT: Includes everything except #include strings, #using_animtree strings and function name strings
 	WORD numOfFunctions;		// 0x34 - Number of functions in this script file
-	WORD numOfExternalFunctions;// 0x36 - 
+	WORD numOfExternalFunctions;// 0x36 - Number of functions imported
 	WORD numOfRelocations;		// 0x38 - Number of patches in the GSC code/file
 	BYTE unknown4[2];			// 0x3A - ?
 	BYTE numOfIncludes;			// 0x3C - Number of included source files
-	BYTE numOfUsinganimtree;	// 0x3B - Number of included animation trees
-	BYTE null1[2];				// 0x3D - Not sure if it's always null, will check later
+	BYTE numOfUsinganimtree;	// 0x3D - Number of included animation trees
+	BYTE _padding[2];			// 0x3E - Struct padding
 } COD9_GSC; // size: 64 bytes
