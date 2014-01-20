@@ -9,6 +9,37 @@ ofstream decompiledFile;
 
 DWORD tabLevel;
 
+void DumpGSCHeader(_COD9_GSC *Header)
+{
+	WORD unknown4 = *(WORD *)Header->unknown4;
+
+	if(unknown4 != 0)
+	{
+		printf("unknown4 is nonzero!\n");
+		getchar();
+	}
+
+	printf("Identifier:\t\t0x%X | 0x%X\n", *(DWORD *)&Header->identifier, *(DWORD *)&Header->identifier[4]);
+	printf("unknown1:\t\t0x%X\n", *(DWORD *)Header->unknown1);
+	printf("includeStructs:\t\t0x%X\n", Header->includeStructs);
+	printf("usinganimtreeStructs:\t0x%X\n", Header->usinganimtreeStructs);
+	printf("codeSectionStart:\t0x%X\n", Header->codeSectionStart);
+	printf("gscStrings:\t\t0x%X\n", Header->gscStrings);
+	printf("gscFunctions:\t\t0x%X\n", Header->gscFunctions);
+	printf("externalFunctions:\t0x%X\n", Header->externalFunctions);
+	printf("gscRelocations:\t\t0x%X\n", Header->gscRelocations);
+	printf("size:\t\t\t0x%X\n", Header->size);
+	printf("codeSectionSize:\t0x%X\n", Header->codeSectionSize);
+	printf("name:\t\t\t0x%X\n", (DWORD)Header->name);
+	printf("numOfStrings:\t\t%d\n", Header->numOfStrings);
+	printf("numOfFunctions:\t\t%d\n", Header->numOfFunctions);
+	printf("numOfExternalFunctions:\t%d\n", Header->numOfExternalFunctions);
+	printf("numOfRelocations:\t%d\n", Header->numOfRelocations);
+	printf("unknown4:\t\t%d\n", unknown4);
+	printf("numOfIncludes:\t\t%d\n", Header->numOfIncludes);
+	printf("numOfUsinganimtree:\t%d\n", Header->numOfUsinganimtree);
+}
+
 void AddString(char* format, bool addTabLevel, ...)
 {
 	va_list ap;
@@ -343,6 +374,8 @@ int wmain(int argc, wchar_t *argv[])
 
 	// load the gsc (external functions resolving, includes, etc...)
 	//LoadGSC();
+
+	DumpGSCHeader((_COD9_GSC *)gscBuffer);
 
 	// decompile the gsc
 	DecompileGSC();
