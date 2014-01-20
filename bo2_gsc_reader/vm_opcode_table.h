@@ -81,8 +81,8 @@ typedef enum
 	/*
 	OP_JumpOnFalse		: does stack -= 8
 	OP_JumpOnTrue		: does stack -= 8
-	OP_JumpOnFalseExpr	: if (*(DWORD*)stack), stack -= 8
-	OP_JumpOnTrueExpr	: if (!*(DWORD*)stack), stack -= 8
+	OP_JumpOnFalseExpr	: if (*(DWORD*)stack), stack -= 8 (if doesn't jump does stuff to stack)
+	OP_JumpOnTrueExpr	: if (!*(DWORD*)stack), stack -= 8 (if doesn't jump does stuff to stack)
 	There is no code written by the decompiler if it's an Expr if
 	*/
 	OP_jump = 0x3F, // does same as OP_skipdev

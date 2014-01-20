@@ -5,9 +5,9 @@ using namespace std;
 struct vmStack_s
 {
 	char* localVars[MAX_VM_LOCAL_STACK_VARS];
-	VariableValue vars[MAX_VM_STACK_VARS];
+	StackEntry vars[MAX_VM_STACK_VARS];
 	char** currentLocalVar;
-	VariableValue* currentVar;
+	StackEntry* currentVar;
 };
 
 extern vmStack_s stack;
@@ -38,7 +38,7 @@ void StackSet(T value, VariableType type) // like StackPush, but it sets the val
 {
 	if (sizeof(value) > sizeof(DWORD))
 	{
-		cout << "StackPush: value must not be longer than 4 bytes long" << endl;
+		cout << "StackSet: value must not be longer than 4 bytes long" << endl;
 		cin.get();
 		ExitProcess(-1);
 	}
@@ -55,6 +55,9 @@ VariableType StackGetLastValueType();
 DWORD StackGetRelativePos();
 DWORD StackGetFlags();
 void StackSetFlag(DWORD flag);
+
+OperatorsInfo* StackGetOperatorsInfo(int index);
+void StackSetOperatorsInfo(OperatorsInfo* operatorsInfo);
 
 // local stack
 

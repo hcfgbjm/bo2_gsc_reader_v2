@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+void build_operation(int index); // used by vm_stack.cpp
+
 void CheckIfJumps(BYTE* opcodesPtr);
 
 void WriteRegisterInfo(BYTE* gscBuffer, BYTE* ip);
