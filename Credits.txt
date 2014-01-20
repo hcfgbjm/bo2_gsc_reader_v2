@@ -1,2 +1,2 @@
 kokole and Nukem - main devs
-master131 - thanks for the found cod4 opcode struct and the gsc pic
+master131 - thanks for the found cod4 opcode struct and the gsc pic <3
