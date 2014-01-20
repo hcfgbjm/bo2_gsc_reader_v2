@@ -8,9 +8,9 @@ enum ObjectType
 	OBJECT_CASTED,
 };
 
-static ObjectType CurrentObject;
-static char* CastedObject;
-static char VariableNameBuffer[256];
+extern ObjectType CurrentObject;
+extern char* CastedObject;
+extern char VariableNameBuffer[256];
 
 char* GetStringForCurrentObject();
 

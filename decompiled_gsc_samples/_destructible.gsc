@@ -22,16 +22,16 @@ init()
 	i = 0;
 	if ( i < destructibles.size )
 	{
-		if ( getsubstr( level.destructibledef, 0, 4 ) == "veh_" )
+		if ( getsubstr( destructibles[i].destructibledef, 0, 4 ) == "veh_" )
 		{
 			destructibles[i] thread destructible_car_death_think();
 			destructibles[i] thread destructible_car_grenade_stuck_think();
 		}
-		if ( issubstr( level.destructibledef, "barrel" ) )
+		if ( issubstr( destructibles[i].destructibledef, "barrel" ) )
 		{
 			destructibles[i] thread destructible_barrel_death_think();
 		}
-		if ( issubstr( level.destructibledef, "gaspump" ) )
+		if ( issubstr( destructibles[i].destructibledef, "gaspump" ) )
 		{
 			destructibles[i] thread destructible_barrel_death_think();
 		}
@@ -102,7 +102,7 @@ complex_explosion( attacker, max_radius )
 // 0xBA8
 destructible_car_explosion( attacker, physics_explosion )
 {
-	if ( level.car_dead )
+	if ( self.car_dead )
 	{
 		return;
 	}
@@ -114,31 +114,31 @@ destructible_car_explosion( attacker, physics_explosion )
 	i = 0;
 	if ( i < players.size )
 	{
-		body = level.body;
+		body = players[i].body;
 		if ( !(IsDefined( body )) )
 		{
 		}
-		if ( distancesquared( level.origin, level.origin ) > 9216 )
+		if ( distancesquared( body.origin, self.origin ) > 9216 )
 		{
 		}
-		if ( level.origin[2] - (level.origin[2] + 32) > 0 )
+		if ( body.origin[2] - (self.origin[2] + 32) > 0 )
 		{
-			level.origin = ( level.origin[0], level.origin[1], level.origin[2] + 16 );
+			body.origin = ( body.origin[0], body.origin[1], body.origin[2] + 16 );
 		}
 		body start_explosive_ragdoll();
 	}
-	level.car_dead = 1;
+	self.car_dead = 1;
 	self thread destructible_car_explosion_animate();
 	if ( IsDefined( attacker ) )
 	{
-		self radiusdamage( level.origin, 256, 300, 75, attacker, "MOD_EXPLOSIVE", "destructible_car_mp" );
+		self radiusdamage( self.origin, 256, 300, 75, attacker, "MOD_EXPLOSIVE", "destructible_car_mp" );
 	}
-	self radiusdamage( level.origin, 256, 300, 75 );
-	playrumbleonposition( "grenade_rumble", level.origin );
-	earthquake( 0.5, 0.5, level.origin, 800 );
+	self radiusdamage( self.origin, 256, 300, 75 );
+	playrumbleonposition( "grenade_rumble", self.origin );
+	earthquake( 0.5, 0.5, self.origin, 800 );
 	if ( physics_explosion )
 	{
-		physicsexplosionsphere( level.origin, 255, 254, 0.3, 400, 25 );
+		physicsexplosionsphere( self.origin, 255, 254, 0.3, 400, 25 );
 	}
 	if ( IsDefined( attacker ) )
 	{
@@ -153,7 +153,7 @@ destructible_car_explosion( attacker, physics_explosion )
 destructible_car_death_think()
 {
 	self endon( "car_dead" );
-	level.car_dead = 0;
+	self.car_dead = 0;
 	self thread destructible_car_death_notify();
 	self waittill( "destructible_base_piece_death" );
 	if ( IsDefined( self ) )
@@ -172,16 +172,16 @@ destructible_car_grenade_stuck_think()
 	if ( !(!(IsDefined( missile ))) )
 	{
 	}
-	if ( !(IsDefined( level.model )) )
+	if ( !(IsDefined( missile.model )) )
 	{
 	}
-	if ( !(level.model == "t5_weapon_crossbow_bolt") )
+	if ( !(missile.model == "t5_weapon_crossbow_bolt") )
 	{
 	}
-	if ( !(level.model == "t6_wpn_grenade_semtex_projectile") )
+	if ( !(missile.model == "t6_wpn_grenade_semtex_projectile") )
 	{
 	}
-	if ( level.model == "t6_wpn_c4_world" )
+	if ( missile.model == "t6_wpn_c4_world" )
 	{
 		self thread destructible_car_grenade_stuck_explode( missile );
 	}
@@ -197,7 +197,7 @@ destructible_car_grenade_stuck_explode( missile )
 	if ( IsDefined( owner ) )
 	{
 	}
-	if ( level.model == "t6_wpn_c4_world" )
+	if ( missile.model == "t6_wpn_c4_world" )
 	{
 		owner endon( "disconnect" );
 		owner endon( "weapon_object_destroyed" );
@@ -232,15 +232,15 @@ destructible_car_death_notify()
 destructible_car_explosion_animate()
 {
 	self setclientflag( 12 );
-	end_origin = level.origin;
-	level.origin = ( level.origin[0], level.origin[1], level.origin[2] + 16 );
+	end_origin = self.origin;
+	self.origin = ( self.origin[0], self.origin[1], self.origin[2] + 16 );
 	items = getdroppedweapons();
 	i = 0;
 	if ( i < items.size )
 	{
-		if ( distancesquared( end_origin, level.origin ) < 16384 )
+		if ( distancesquared( end_origin, items[i].origin ) < 16384 )
 		{
-			if ( level.origin[2] - (end_origin[2] + 32) > 0 )
+			if ( items[i].origin[2] - (end_origin[2] + 32) > 0 )
 			{
 				items[i] delete();
 			}
@@ -278,7 +278,7 @@ codecallback_destructibleevent( event, param1, param2, param3 )
 breakafter( time, damage, piece )
 {
 	self endon( "breakafter" );
-	self dodamage( damage, level.origin, undefined, undefined );
+	self dodamage( damage, self.origin, undefined, undefined );
 } // SP = 0x14 - check failed (function may have been decompiled incorrectly)
 
 // 0x1100
@@ -308,17 +308,17 @@ destructible_barrel_explosion( attacker, physics_explosion )
 	{
 		physics_explosion = 1;
 	}
-	if ( IsDefined( level.target ) )
+	if ( IsDefined( self.target ) )
 	{
-		dest_clip = getent( level.target, "targetname" );
+		dest_clip = getent( self.target, "targetname" );
 		dest_clip delete();
 	}
-	self radiusdamage( level.origin, 256, 300, 75, attacker, "MOD_EXPLOSIVE", "explodable_barrel_mp" );
-	playrumbleonposition( "grenade_rumble", level.origin );
-	earthquake( 0.5, 0.5, level.origin, 800 );
+	self radiusdamage( self.origin, 256, 300, 75, attacker, "MOD_EXPLOSIVE", "explodable_barrel_mp" );
+	playrumbleonposition( "grenade_rumble", self.origin );
+	earthquake( 0.5, 0.5, self.origin, 800 );
 	if ( physics_explosion )
 	{
-		physicsexplosionsphere( level.origin, 255, 254, 0.3, 400, 25 );
+		physicsexplosionsphere( self.origin, 255, 254, 0.3, 400, 25 );
 	}
 		/* Error: unknown opcode (0x5E) */
 } // SP = 0x18 - check failed (function may have been decompiled incorrectly)

@@ -6,7 +6,7 @@
 // 0xBC
 main()
 {
-	if ( level.type == "dog" )
+	if ( self.type == "dog" )
 	{
 		dog_jump_down_far( 96, 11, 0.65 );
 	}

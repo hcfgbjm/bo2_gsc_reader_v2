@@ -1,5 +1,9 @@
 #include "stdafx.h"
 
+ObjectType CurrentObject;
+char* CastedObject;
+char VariableNameBuffer[256];
+
 char* GetStringForCurrentObject()
 {
 	switch (CurrentObject)
