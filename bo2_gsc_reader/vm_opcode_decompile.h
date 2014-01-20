@@ -264,6 +264,12 @@ BYTE* OP_getdvarfloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 // 0x6B
 BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
+// 0x70
+BYTE* OP_weird1_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x71
+BYTE* OP_weird2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
 // 0x73
 BYTE* OP_GetUndefined2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 

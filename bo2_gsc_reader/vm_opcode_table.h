@@ -136,6 +136,10 @@ typedef enum
 	OP_getdvarcolorgreen = 0x6E,
 	OP_getdvarcolorblue = 0x6F,
 
+	OP_weird1 = 0x70,
+	OP_weird2 = 0x71,
+	OP_weird3 = 0x72, // this one is easy, too lazy to implement
+
 	OP_GetUndefined2 = 0x73, // does the same thing as OP_GetUndefined
 
 	OP_NOP = 0x75,

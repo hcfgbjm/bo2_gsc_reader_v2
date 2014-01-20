@@ -336,6 +336,12 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_getdvarvector:
 			opcodesPtr = OP_getdvarvector_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_weird1:
+			opcodesPtr = OP_weird1_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_weird2:
+			opcodesPtr = OP_weird2_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_GetUndefined2:
 			opcodesPtr = OP_GetUndefined2_Decompile(gscBuffer, opcodesPtr);
 			break;

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool opcode_dec = false;
+bool opcode_dec = true;
 
 __inline BYTE* GET_ALIGNED_WORD			(BYTE* x) { return (BYTE*)(((DWORD)x + 1) & 0xFFFFFFFE); }
 __inline BYTE* GET_ALIGNED_DWORD		(BYTE* x) { return (BYTE*)(((DWORD)x + 3) & 0xFFFFFFFC); }
@@ -2198,6 +2198,34 @@ BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	
 	if (opcode_dec) {
 	AddString("// OP_getdvarvector();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	return currentPos;
+}
+
+// 0x70
+BYTE* OP_weird1_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_weird1();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	return currentPos;
+}
+
+// 0x71
+BYTE* OP_weird2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_weird2();", true);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
