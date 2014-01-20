@@ -73,8 +73,37 @@ void jump_expression_decompile(BYTE jumpOP, DWORD jumpTo)
 	IncTabLevel();
 }
 
+// special call decompilation for waittill & waittillmatch
+void waittill_call_decompile(char* functionName, BYTE* currentPos)
+{
+	string _FunctionString;
+	
+	// append the method object
+	_FunctionString.append((char*)StackGetLastValue());
+	_FunctionString.append(" ");
+	
+	StackPop(); // pop the method object (like self, etc...) from the stack
+
+	// write the function name and write all the parameters
+	_FunctionString.append(functionName);
+	_FunctionString.append("( ");
+	_FunctionString.append((char*)StackGetLastValue());
+
+	StackPop(); // pop the single waittill parameter
+
+	for (BYTE* i = currentPos; *i == OP_SafeSetWaittillVariableFieldCached; i += 2) // += 2 because 1 is opcode size and 1 is the local var index
+	{
+		_FunctionString.append(", ");
+		_FunctionString.append(StackLocalGetValue(*(i + 1)));
+	}
+
+	_FunctionString.append(" );\n");
+
+	AddString((char*)_FunctionString.c_str(), true);
+}
+
 // if hasPrecodepos is true, it ignores _numOfParameters
-void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool methodCall, bool threadCall, bool resultUnused)
+void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused)
 {
 	DWORD numOfParameters = 0;
 
@@ -105,26 +134,30 @@ void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParamete
 		_FunctionString.append("thread");
 		_FunctionString.append(" ");
 	}
+	
+	if (pointerCall)
+		_FunctionString.append("[[ ");
+	_FunctionString.append(functionName);
+	if (pointerCall)
+		_FunctionString.append(" ]]");
 
 	if (numOfParameters) // if the function has parameters
 	{
-		_FunctionString.append(functionName);
 		_FunctionString.append("( ");
 
 		for (DWORD i = 0; i < numOfParameters; i++)
 		{
 			_FunctionString.append((char*)StackGetLastValue());
+			StackPop();
+
 			if ((i + 1) < numOfParameters) // execute this only if it's not the last iteration
 				_FunctionString.append(", ");
-
-			StackPop(); // pop the parameter from the stack
 		}
 
 		_FunctionString.append(" )");
 	}
 	else
 	{
-		_FunctionString.append(functionName);
 		_FunctionString.append("()");
 	}
 

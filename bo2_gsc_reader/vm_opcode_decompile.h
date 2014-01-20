@@ -94,10 +94,10 @@ BYTE* OP_GetSelfObject_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 BYTE* OP_EvalFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x21
-BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+BYTE* OP_EvalFieldVariableRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x22
-BYTE* OP_SafeCreateVariableFieldCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x24
 BYTE* OP_SafeSetWaittillVariableFieldCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
@@ -126,14 +126,26 @@ BYTE* OP_PreScriptCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 // 0x2E
 BYTE* OP_ScriptFunctionCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
+// 0x2F
+BYTE* OP_ScriptFunctionCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
 // 0x30
 BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x31
+BYTE* OP_ScriptMethodCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x32
 BYTE* OP_ScriptThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
+// 0x33
+BYTE* OP_ScriptThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
 // 0x34
 BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x35
+BYTE* OP_ScriptMethodThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x36
 BYTE* OP_DecTop_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
@@ -249,8 +261,32 @@ BYTE* OP_vector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 // 0x5C
 BYTE* OP_GetHash_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
+// 0x5E
+BYTE* OP_GetSimpleVector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
 // 0x5F
 BYTE* OP_isdefined_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x60
+BYTE* OP_vectorscale_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x61
+BYTE* OP_anglestoup_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x62
+BYTE* OP_anglestoright_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x63
+BYTE* OP_anglestoforward_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x64
+BYTE* OP_angleclamp180_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x65
+BYTE* OP_vectorstoangle_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x66
+BYTE* OP_abs_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x67
 BYTE* OP_gettime_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
@@ -266,6 +302,18 @@ BYTE* OP_getdvarfloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x6B
 BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x6C
+BYTE* OP_getdvarcolorred_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x6D
+BYTE* OP_getdvarcolorgreen_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x6E
+BYTE* OP_getdvarcolorblue_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x6F
+BYTE* OP_getdvarcoloralpha_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x70
 BYTE* OP_GetFirstArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);

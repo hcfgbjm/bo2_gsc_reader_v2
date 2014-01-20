@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool opcode_dec = false;
+bool opcode_dec = true;
 
 // 0x0
 BYTE* OP_End_Decompile(DWORD gscBuffer, BYTE* opcodesPtr, bool functionEnd)
@@ -179,7 +179,6 @@ BYTE* OP_GetFloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	//char* Float = RemoveDecimalTrailingZeros(MallocAndSprintf("%f", *(float*)(GET_ALIGNED_DWORD(currentPos))));
 	char *Float = MallocAndSprintf("%g", *(float*)(GET_ALIGNED_DWORD(currentPos)));
 
 	if (opcode_dec) {
@@ -256,7 +255,7 @@ BYTE* OP_GetVector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	currentPos += 1; // opcode size 1 byte
 
 	float* Vector = (float*)GET_ALIGNED_DWORD(currentPos);
-	char* VectorString = MallocAndSprintf("{ %f, %f, %f }", *(Vector), *(Vector + 1), *(Vector + 2));
+	char* VectorString = MallocAndSprintf("( %f, %f, %f )", *(Vector), *(Vector + 1), *(Vector + 2));
 	
 	if (opcode_dec) {
 	AddString("// OP_GetVector( %s );", true, VectorString);
@@ -612,7 +611,7 @@ BYTE* OP_EvalFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 }
 
 // 0x21
-BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+BYTE* OP_EvalFieldVariableRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
@@ -621,7 +620,7 @@ BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	char* FieldOwner = GetStringForCurrentObject();
 
 	if (opcode_dec) {
-	AddString("// OP_ClearFieldVariable( \"%s\" ); (%s.%s)", true, FieldVariable, FieldOwner, FieldVariable);
+	AddString("// OP_EvalFieldVariableRef( \"%s\" ); (%s.%s)", true, FieldVariable, FieldOwner, FieldVariable);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
@@ -633,15 +632,20 @@ BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 }
 
 // 0x22
-BYTE* OP_SafeCreateVariableFieldCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
+	char* FieldVariable = (char*)(gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	char* FieldOwner = GetStringForCurrentObject();
+
 	if (opcode_dec) {
-	AddString("// OP_SafeCreateVariableFieldCached( \"%s\" );", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	AddString("// OP_ClearFieldVariable( \"%s\" );", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
+
+	AddString("%s.%s = undefined;\n", true, FieldOwner, FieldVariable);
 
 	currentPos = GET_ALIGNED_WORD(currentPos) + 2;
 
@@ -739,6 +743,10 @@ BYTE* OP_wait_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
+	AddString("wait %s;\n", true, (char*)StackGetLastValue());
+
+	StackPop();
+
 	return currentPos;
 }
 
@@ -752,6 +760,8 @@ BYTE* OP_waittillFrameEnd_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	AddString("// OP_waittillFrameEnd();", true);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
+
+	AddString("waittillframeend;\n", true);
 
 	return currentPos;
 }
@@ -778,16 +788,46 @@ BYTE* OP_ScriptFunctionCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* Function = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
 	
 	if (opcode_dec) {
-	AddString("// OP_ScriptFunctionCall( \"%s\" );", true, Function);
+	AddString("// OP_ScriptFunctionCall( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+	
+	if (*(BYTE*)currentPos != 0) // delete later
+	{
+		cout << "OMG LULZ SCRIPTFUNCTIONCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
+		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
 
-	call_decompile(Function, true, NULL, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile(FunctionName, true, NULL, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x2F
+BYTE* OP_ScriptFunctionCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	
+	if (opcode_dec) {
+	AddString("// OP_ScriptFunctionCallPointer( \"%s\" );", true, FunctionName);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	StackPop(); // pop the function name from the stack
+
+	currentPos += 1;
+
+	call_decompile(FunctionName, true, NULL, true, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	free(FunctionName); // free the function name passed to call_decompile
 
 	return currentPos;
 }
@@ -798,10 +838,10 @@ BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* Method = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
 	
 	if (opcode_dec) {
-	AddString("// OP_ScriptMethodCall( %d, \"%s\" );", true, *(BYTE*)currentPos, gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	AddString("// OP_ScriptMethodCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 	
@@ -813,26 +853,84 @@ BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
 
-	call_decompile(Method, true, NULL, true, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile(FunctionName, true, NULL, false, true, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
+
+// 0x31
+BYTE* OP_ScriptMethodCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	
+	if (opcode_dec) {
+	AddString("// OP_ScriptMethodCallPointer( \"%s\" );", true, FunctionName);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	StackPop(); // pop the function name from the stack
+
+	currentPos += 1;
+
+	call_decompile(FunctionName, true, NULL, true, true, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	free(FunctionName); // free the function name passed to call_decompile
+
+	return currentPos;
+}
+
 // 0x32
 BYTE* OP_ScriptThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
+
+	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
 	
 	if (opcode_dec) {
-	AddString("// OP_ScriptThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	AddString("// OP_ScriptThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	if (*(BYTE*)currentPos != 0) // delete later
+	{
+		cout << "OMG LULZ SCRIPTTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
+		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
 
+	call_decompile(FunctionName, true, NULL, false, false, true, *(BYTE*)(currentPos) == OP_DecTop);
+
 	return currentPos;
 }
 
+// 0x33
+BYTE* OP_ScriptThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	
+	if (opcode_dec) {
+	AddString("// OP_ScriptThreadCallPointer( \"%s\" );", true, FunctionName);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	StackPop(); // pop the function name from the stack
+
+	currentPos += 1;
+
+	call_decompile(FunctionName, true, NULL, true, false, true, *(BYTE*)(currentPos) == OP_DecTop);
+
+	free(FunctionName); // free the function name passed to call_decompile
+
+	return currentPos;
+}
 
 // 0x34
 BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
@@ -840,22 +938,46 @@ BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* MethodThread = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
 	
 	if (opcode_dec) {
-	AddString("// OP_ScriptMethodThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, MethodThread);
+	AddString("// OP_ScriptMethodThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
 	if (*(BYTE*)currentPos != 0) // delete later
 	{
-		cout << "OMG LULZ METHODTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
+		cout << "OMG LULZ SCRIPTMETHODTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
 		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4; // show byte...?
 
-	call_decompile(MethodThread, true, NULL, true, true, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile(FunctionName, true, NULL, false, true, true, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x35
+BYTE* OP_ScriptMethodThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	
+	if (opcode_dec) {
+	AddString("// OP_ScriptMethodThreadCallPointer( \"%s\" );", true, FunctionName);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	StackPop(); // pop the function name from the stack
+
+	currentPos += 1;
+
+	call_decompile(FunctionName, true, NULL, true, true, true, *(BYTE*)(currentPos) == OP_DecTop);
+
+	free(FunctionName); // free the function name passed to call_decompile
 
 	return currentPos;
 }
@@ -1395,6 +1517,8 @@ BYTE* OP_waittillmatch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
+	waittill_call_decompile("waittillmatch", currentPos);
+
 	return currentPos;
 }
 
@@ -1409,7 +1533,7 @@ BYTE* OP_waittill_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 	
-	call_decompile("waittill", false, 1, true, false, true);
+	waittill_call_decompile("waittill", currentPos);
 
 	return currentPos;
 }
@@ -1425,6 +1549,10 @@ BYTE* OP_notify_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
+	call_decompile("notify", true, NULL, false, true, false, true);
+
+	StackPop(); // this function doesn't have OP_DecTop so we must pop manually
+
 	return currentPos;
 }
 
@@ -1439,7 +1567,9 @@ BYTE* OP_endon_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("endon", false, 1, true, false, true);
+	call_decompile("endon", false, 1, false, true, false, true);
+
+	StackPop();
 
 	return currentPos;
 }
@@ -1463,19 +1593,21 @@ BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 // 0x59
 BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
+	BYTE* currentPos = opcodesPtr;
 	opcodesPtr += 1;// opcode size 1 byte
+	
+	if (opcode_dec) {
+		AddString("// OP_switch( %s );", true, StackGetLastValue());
+		WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
 
-	DWORD caseTableInfo = (DWORD)GET_ALIGNED_DWORD(opcodesPtr);
-	BYTE *currentPos	= GET_ALIGNED_DWORD((BYTE *)(*(DWORD *)caseTableInfo + caseTableInfo + 4));
+	cout << "currentPos: 0x" << hex << (DWORD)currentPos << endl;
+
+	currentPos = (BYTE*)((*(DWORD*)GET_ALIGNED_DWORD(currentPos) + (DWORD)GET_ALIGNED_DWORD(currentPos) + 7) & 0xFFFFFFFC);
 
 	int caseCount = *(DWORD *)currentPos;
 
 	currentPos += 4;
-
-	if (opcode_dec) {
-		AddString("// OP_switch( %s ); ( %d )", true, StackGetLastValue(), caseCount);
-		WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
-	}
 
 	AddString("switch ( %s )\n", true, StackGetLastValue());
 	AddString("{\n", true);
@@ -1494,6 +1626,9 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 		currentPos = ip + 4;
 
+		//if (!strcmp((char*)StackGetLastValue(), (char *)(gscBuffer + caseLabelOffset))) // found in game code... needed?
+			//break;
+
 		if(caseLabelOffset == 0)
 			AddString("default:\n", true);
 		else
@@ -1503,6 +1638,8 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	}
 
 	currentPos += ipOffset;
+
+	StackPop();
 
 	return currentPos;
 }
@@ -1566,6 +1703,61 @@ BYTE* OP_GetHash_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	return currentPos;
 }
 
+// 0x5E
+BYTE* OP_GetSimpleVector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_GetSimpleVector( 0x%X );", true, *(BYTE*)currentPos);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	BYTE simplevectorflags = *(BYTE*)currentPos;
+	float simplevector1 = 0;
+	float simplevector2 = 0;
+	float simplevector3 = 0;
+
+	if (simplevectorflags & 0x20)
+		simplevector1 = 1.0f;
+	else
+	{
+		if (simplevectorflags & 0x10)
+			simplevector1 = -1.0f;
+		else
+			simplevector1 = 0.0f;
+	}
+
+	if (simplevectorflags & 0x08)
+		simplevector2 = 1.0f;
+	else
+	{
+		if (simplevectorflags & 0x04)
+			simplevector2 = -1.0f;
+		else
+			simplevector2 = 0.0f;
+	}
+
+	if (simplevectorflags & 0x02)
+		simplevector3 = 1.0f;
+	else
+	{
+		if (simplevectorflags & 0x01)
+			simplevector3 = -1.0f;
+		else
+			simplevector3 = 0.0f;
+	}
+	
+	char* SimpleVector = MallocAndSprintf("( %g, %g, %g )", simplevector1, simplevector2, simplevector3);
+
+	StackPush<char*>(SimpleVector, type_decompiled_string);
+
+	currentPos += 1;
+
+	return currentPos;
+}
+
 // 0x5F
 BYTE* OP_isdefined_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
@@ -1577,7 +1769,120 @@ BYTE* OP_isdefined_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("IsDefined", false, 1, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("IsDefined", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x60
+BYTE* OP_vectorscale_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_vectorscale();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("vector_scale", false, 2, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x61
+BYTE* OP_anglestoup_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_anglestoup();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("anglestoup", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x62
+BYTE* OP_anglestoright_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_anglestoright();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("anglestoright", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x63
+BYTE* OP_anglestoforward_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_anglestoforward();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("anglestoforward", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x64
+BYTE* OP_angleclamp180_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_angleclamp180();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("angleclamp180", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x65
+BYTE* OP_vectorstoangle_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_vectorstoangle();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	// i think that the devs made a typo, its not vectorstoangle, its vectortoangles
+	call_decompile("vectortoangles", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x66
+BYTE* OP_abs_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_abs();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("abs", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1593,7 +1898,7 @@ BYTE* OP_gettime_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("GetTime", false, 0, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetTime", false, 0, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1609,7 +1914,7 @@ BYTE* OP_getdvar_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("GetDvar", false, 1, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetDvar", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1625,7 +1930,7 @@ BYTE* OP_getdvarint_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("GetDvarInt", false, 1, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetDvarInt", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1641,7 +1946,7 @@ BYTE* OP_getdvarfloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr) // need to ma
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	call_decompile("GetDvarFloat", false, 1, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetDvarFloat", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1656,6 +1961,72 @@ BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	AddString("// OP_getdvarvector();", true);
 	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
+
+	call_decompile("GetDvarVector", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x6C
+BYTE* OP_getdvarcolorred_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_getdvarcolorred();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("GetDvarColorRed", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x6D
+BYTE* OP_getdvarcolorgreen_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_getdvarcolorgreen();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("GetDvarColorGreen", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x6E
+BYTE* OP_getdvarcolorblue_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_getdvarcolorblue();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("GetDvarColorBlue", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+
+	return currentPos;
+}
+
+// 0x6F
+BYTE* OP_getdvarcoloralpha_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	AddString("// OP_getdvarcoloralpha();", true);
+	WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
+
+	call_decompile("GetDvarColorAlpha", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1677,7 +2048,7 @@ BYTE* OP_GetFirstArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	//	[Array]  Array to look up
 	// returns:
 	//	[String, int, object] Key
-	call_decompile("GetFirstArrayKey", false, 1, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetFirstArrayKey", false, 1, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }
@@ -1700,7 +2071,7 @@ BYTE* OP_GetNextArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	//	[String, int, object] Previous key
 	// returns:
 	//	[String, int, object] Key
-	call_decompile("GetNextArrayKey", false, 2, false, false, *(BYTE*)(currentPos) == OP_DecTop);
+	call_decompile("GetNextArrayKey", false, 2, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
 	return currentPos;
 }

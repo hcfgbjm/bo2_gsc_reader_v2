@@ -16,7 +16,9 @@ char* GetStringForCurrentObject();
 
 void jump_expression_decompile(BYTE jumpOP, DWORD jumpTo);
 
-void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool methodCall, bool threadCall, bool resultUnused);
+void waittill_call_decompile(char* functionName, BYTE* currentPos);
+
+void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused);
 
 void build_operation(int index); // used by vm_stack.cpp
 

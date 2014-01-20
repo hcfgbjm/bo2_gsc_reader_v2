@@ -37,10 +37,10 @@ typedef enum
 	OP_GetAnimation = 0x13,
 	OP_GetGameRef = 0x14,
 	OP_GetFunction = 0x15,
-	OP_CreateLocalVariable = 0x16, // looks like its true
+	OP_CreateLocalVariable = 0x16,
 	OP_CreateLocalVariables = 0x17,
 	OP_RemoveLocalVariables = 0x18,
-	OP_EvalLocalVariableCached = 0x19, // NOT SURE, THIS IS STRAAAAAAANGE
+	OP_EvalLocalVariableCached = 0x19,
 	OP_EvalArray = 0x1A,
 	OP_EvalLocalArrayRefCached = 0x1B, // not sure of this array, however i think its correct!
 	OP_EvalArrayRef = 0x1C,
@@ -48,14 +48,14 @@ typedef enum
 	OP_EmptyArray = 0x1E,
 	OP_GetSelfObject = 0x1F,
 	OP_EvalFieldVariable = 0x20,
-	OP_ClearFieldVariable = 0x21, // not sure of this array, must be probably wrong
-	OP_SafeCreateVariableFieldCached = 0x22,
-	OP_SafeSetVariableFieldCached = 0x23,
+	OP_EvalFieldVariableRef = 0x21,
+	OP_ClearFieldVariable = 0x22,
+	OP_SafeSetVariableFieldCached = 0x23, // this opcode isn't handled yet (is it even used?)
 	OP_SafeSetWaittillVariableFieldCached = 0x24,
 	OP_clearparams = 0x25,
-	OP_checkclearparams = 0x26, // not sure
-	OP_EvalLocalVariableRefCached = 0x27, // not sure
-	OP_SetVariableField = 0x28, // not sure of this array, must be probably wrong
+	OP_checkclearparams = 0x26,
+	OP_EvalLocalVariableRefCached = 0x27,
+	OP_SetVariableField = 0x28,
 	OP_CallBuiltin = 0x29,
 	OP_CallBuiltinMethod = 0x2A,
 	OP_wait = 0x2B,
@@ -63,14 +63,14 @@ typedef enum
 	OP_PreScriptCall = 0x2D, // does the same thing as OP_voidCodepos
 	OP_ScriptFunctionCall = 0x2E,
 	OP_ScriptFunctionCallPointer = 0x2F,
-	OP_ScriptMethodCall = 0x30, // not sure of this call opcodes
+	OP_ScriptMethodCall = 0x30,
 	OP_ScriptMethodCallPointer = 0x31,
 	OP_ScriptThreadCall = 0x32,
 	OP_ScriptThreadCallPointer = 0x33,
 	OP_ScriptMethodThreadCall = 0x34,
 	OP_ScriptMethodThreadCallPointer = 0x35,
-	OP_DecTop = 0x36, // not sure
-	OP_CastFieldObject = 0x37, // not sure
+	OP_DecTop = 0x36,
+	OP_CastFieldObject = 0x37,
 	OP_CastBool = 0x38,
 	OP_BoolNot = 0x39,
 	OP_BoolComplement = 0x3A,
@@ -116,9 +116,7 @@ typedef enum
 	OP_vector = 0x5B,
 	OP_GetHash = 0x5C, // doesn't exist in cod4
 
-	// Something to do with floating point variables
-	OP_hashflagsorsomething = 0x5E, // need to check later and give a better name...
-
+	OP_GetSimpleVector = 0x5E, // doesn't exist in cod4 (the functions below neither do)
 	OP_isdefined = 0x5F,
 	OP_vectorscale = 0x60,
 	OP_anglestoup = 0x61,
@@ -150,10 +148,7 @@ typedef enum
 	OP_abort = 0x76,
 	OP_object = 0x77,
 	OP_thread_object = 0x78, // not sure
-
-	// OP_EvalLocalVariable ?
-	// OP_Unknown79 = 0x79,
-
+	OP_EvalLocalVariable = 0x79,
 	OP_EvalLocalVariableRef = 0x7A, // not sure
 	OP_skipdev = 0x7B // does same as OP_jump
 };

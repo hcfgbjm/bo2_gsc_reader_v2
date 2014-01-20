@@ -171,11 +171,11 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_EvalFieldVariable:
 			opcodesPtr = OP_EvalFieldVariable_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_EvalFieldVariableRef:
+			opcodesPtr = OP_EvalFieldVariableRef_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_ClearFieldVariable:
 			opcodesPtr = OP_ClearFieldVariable_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_SafeCreateVariableFieldCached:
-			opcodesPtr = OP_SafeCreateVariableFieldCached_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_SafeSetWaittillVariableFieldCached:
 			opcodesPtr = OP_SafeSetWaittillVariableFieldCached_Decompile(gscBuffer, opcodesPtr);
@@ -204,14 +204,26 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_ScriptFunctionCall:
 			opcodesPtr = OP_ScriptFunctionCall_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_ScriptFunctionCallPointer:
+			opcodesPtr = OP_ScriptFunctionCallPointer_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_ScriptMethodCall:
 			opcodesPtr = OP_ScriptMethodCall_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_ScriptMethodCallPointer:
+			opcodesPtr = OP_ScriptMethodCallPointer_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_ScriptThreadCall:
 			opcodesPtr = OP_ScriptThreadCall_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_ScriptThreadCallPointer:
+			opcodesPtr = OP_ScriptThreadCallPointer_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_ScriptMethodThreadCall:
 			opcodesPtr = OP_ScriptMethodThreadCall_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_ScriptMethodThreadCallPointer:
+			opcodesPtr = OP_ScriptMethodThreadCallPointer_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_DecTop:
 			opcodesPtr = OP_DecTop_Decompile(gscBuffer, opcodesPtr);
@@ -327,8 +339,32 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_GetHash:
 			opcodesPtr = OP_GetHash_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_GetSimpleVector:
+			opcodesPtr = OP_GetSimpleVector_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_isdefined:
 			opcodesPtr = OP_isdefined_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_vectorscale:
+			opcodesPtr = OP_vectorscale_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_anglestoup:
+			opcodesPtr = OP_anglestoup_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_anglestoright:
+			opcodesPtr = OP_anglestoright_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_anglestoforward:
+			opcodesPtr = OP_anglestoforward_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_angleclamp180:
+			opcodesPtr = OP_angleclamp180_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_vectorstoangle:
+			opcodesPtr = OP_vectorstoangle_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_abs:
+			opcodesPtr = OP_abs_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_gettime:
 			opcodesPtr = OP_gettime_Decompile(gscBuffer, opcodesPtr);
@@ -344,6 +380,18 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 			break;
 		case OP_getdvarvector:
 			opcodesPtr = OP_getdvarvector_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_getdvarcolorred:
+			opcodesPtr = OP_getdvarcolorred_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_getdvarcolorgreen:
+			opcodesPtr = OP_getdvarcolorgreen_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_getdvarcolorblue:
+			opcodesPtr = OP_getdvarcolorblue_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_getdvarcoloralpha:
+			opcodesPtr = OP_getdvarcoloralpha_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_GetFirstArrayKey:
 			opcodesPtr = OP_GetFirstArrayKey_Decompile(gscBuffer, opcodesPtr);
