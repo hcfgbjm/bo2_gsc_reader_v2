@@ -234,6 +234,12 @@ BYTE* OP_endon_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 // 0x58
 BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
+// 0x59
+BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+
+// 0x5A
+BYTE *OP_endswitch_Decompile(DWORD gscBuffer, BYTE *opcodesPtr);
+
 // 0x5B
 BYTE* OP_vector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 

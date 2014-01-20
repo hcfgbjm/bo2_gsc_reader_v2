@@ -312,6 +312,12 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_voidCodepos:
 			opcodesPtr = OP_voidCodepos_Decompile(gscBuffer, opcodesPtr);
 			break;
+		case OP_switch:
+			opcodesPtr = OP_switch_Decompile(gscBuffer, opcodesPtr);
+			break;
+		case OP_endswitch:
+			opcodesPtr = OP_endswitch_Decompile(gscBuffer, opcodesPtr);
+			break;
 		case OP_vector:
 			opcodesPtr = OP_vector_Decompile(gscBuffer, opcodesPtr);
 			break;

@@ -1445,17 +1445,65 @@ BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	return currentPos;
 }
 
+// 0x59
 BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
-//	(*(DWORD *)GET_ALIGNED_DWORD(opcodesPtr) + GET_ALIGNED_DWORD(opcodesPtr) + 7) & 0xFFFFFFFC;
+	DWORD caseTableInfo = (DWORD)GET_ALIGNED_DWORD(opcodesPtr);
+	BYTE *currentPos	= GET_ALIGNED_DWORD((BYTE *)(*(DWORD *)caseTableInfo + caseTableInfo + 4));
 
-//	((opcodesPtr + 3) & 0xFFFFFFFC)
+	int caseCount = *(DWORD *)currentPos;
 
-//	BYTE* ofs = (*(DWORD *)((opcodesPtr + 3) & 0xFFFFFFFC) + ((opcodesPtr + 3) & 0xFFFFFFFC) + 7) & 0xFFFFFFFC;
+	currentPos += 4;
 
-	opcodesPtr += 1;
+	if (opcode_dec) {
+		AddString("// OP_switch( %s ); ( %d )", true, StackGetLastValue(), caseCount);
+		WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
+	}
 
-	return opcodesPtr;
+	AddString("switch ( %s )\n", true, StackGetLastValue());
+	AddString("{\n", true);
+	IncTabLevel();
+
+	DWORD ipOffset = 0;
+	for(int i = 0; i < caseCount; i++)
+	{
+		// Case name/value
+		BYTE *label				= GET_ALIGNED_DWORD(currentPos);
+		DWORD caseLabelOffset	= *(DWORD *)label;
+
+		// Case code pointer
+		BYTE *ip				= GET_ALIGNED_DWORD(label + 4);
+		ipOffset				= *(DWORD *)ip;
+
+		currentPos = ip + 4;
+
+		if(caseLabelOffset == 0)
+			AddString("default:\n", true);
+		else
+			AddString("case \"%s\":\n", true, (char *)(gscBuffer + caseLabelOffset));
+
+		AddString("break;\n", true);
+	}
+
+	currentPos += ipOffset;
+
+	return currentPos;
+}
+
+// 0x5A
+BYTE *OP_endswitch_Decompile(DWORD gscBuffer, BYTE *opcodesPtr)
+{
+	BYTE *currentPos = GET_ALIGNED_DWORD(opcodesPtr + 4);
+
+	int caseCount = *(int *)currentPos;
+
+	// Skip each case block
+	currentPos = GET_ALIGNED_DWORD(currentPos + 4) + (8 * caseCount);
+
+	DecTabLevel();
+	AddString("}\n", true);
+
+	return currentPos;
 }
 
 // 0x5B
