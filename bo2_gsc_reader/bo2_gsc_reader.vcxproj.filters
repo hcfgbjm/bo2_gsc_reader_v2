@@ -21,9 +21,6 @@
     <Text Include="FLAG_4.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="bo2_gsc_file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,10 +45,16 @@
     <ClInclude Include="vm_opcode_decompile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="crc32.h">
+    <ClInclude Include="bo2_dvar_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bo2_dvar_list.h">
+    <ClInclude Include="vm_decompile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,6 +74,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vm_opcode_decompile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vm_decompile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

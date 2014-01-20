@@ -30,6 +30,7 @@
     <PlatformToolset>v110</PlatformToolset>
     <CLRSupport>false</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -69,9 +70,8 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -79,11 +79,6 @@
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
   <ItemGroup>
     <Text Include="cod4_opcodes.txt" />
     <Text Include="FLAG_2.txt" />
@@ -94,9 +89,10 @@
     <ClInclude Include="bo2_dvar_list.h" />
     <ClInclude Include="bo2_gsc_file.h" />
     <ClInclude Include="bo2_gsc_reader.h" />
-    <ClInclude Include="crc32.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="utility.h" />
+    <ClInclude Include="vm_decompile.h" />
     <ClInclude Include="vm_define.h" />
     <ClInclude Include="vm_opcode.h" />
     <ClInclude Include="vm_opcode_decompile.h" />
@@ -108,6 +104,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bo2_gsc_reader.cpp" />
+    <ClCompile Include="utility.cpp" />
+    <ClCompile Include="vm_decompile.cpp" />
     <ClCompile Include="vm_opcode.cpp" />
     <ClCompile Include="vm_opcode_decompile.cpp" />
     <ClCompile Include="vm_stack.cpp" />

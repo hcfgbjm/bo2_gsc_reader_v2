@@ -1,11 +1,5 @@
 #include "stdafx.h"
 
-void build_operation(int index); // used by vm_stack.cpp
-
-void CheckIfJumps(BYTE* opcodesPtr);
-
-void WriteRegisterInfo(BYTE* gscBuffer, BYTE* ip);
-
 // 0x0
 BYTE* OP_End_Decompile(DWORD gscBuffer, BYTE* opcodesPtr, bool functionEnd);
 
@@ -265,10 +259,10 @@ BYTE* OP_getdvarfloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x70
-BYTE* OP_weird1_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+BYTE* OP_GetFirstArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x71
-BYTE* OP_weird2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+BYTE* OP_GetNextArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
 
 // 0x73
 BYTE* OP_GetUndefined2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);

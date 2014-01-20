@@ -10,7 +10,7 @@ void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 	AddString("// 0x%X\n", false, gscFunc->start);
 
 	AddString("%s(", false, gscBuffer + gscFunc->name);
-	
+
 	if (gscFunc->numOfParameters) // need to add a space if there are parameters (more close to the original)
 	{
 		AddString(" ", false);
@@ -37,7 +37,7 @@ void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 		}
 	}
 end_param_decompilation:
-	
+
 	// init stack
 	InitStacks();
 
@@ -336,11 +336,11 @@ void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
 		case OP_getdvarvector:
 			opcodesPtr = OP_getdvarvector_Decompile(gscBuffer, opcodesPtr);
 			break;
-		case OP_weird1:
-			opcodesPtr = OP_weird1_Decompile(gscBuffer, opcodesPtr);
+		case OP_GetFirstArrayKey:
+			opcodesPtr = OP_GetFirstArrayKey_Decompile(gscBuffer, opcodesPtr);
 			break;
-		case OP_weird2:
-			opcodesPtr = OP_weird2_Decompile(gscBuffer, opcodesPtr);
+		case OP_GetNextArrayKey:
+			opcodesPtr = OP_GetNextArrayKey_Decompile(gscBuffer, opcodesPtr);
 			break;
 		case OP_GetUndefined2:
 			opcodesPtr = OP_GetUndefined2_Decompile(gscBuffer, opcodesPtr);

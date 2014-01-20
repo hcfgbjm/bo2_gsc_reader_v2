@@ -15,7 +15,7 @@
 // else use stack
 typedef enum
 {
-	OP_End = 0x0, // not sure
+	OP_End = 0x0,
 	OP_Return = 0x1,
 	OP_GetUndefined = 0x2, // does the same thing as OP_GetUndefined2
 	OP_GetZero = 0x3,
@@ -116,6 +116,7 @@ typedef enum
 	OP_vector = 0x5B,
 	OP_GetHash = 0x5C, // doesn't exist in cod4
 
+	// Something to do with floating point variables
 	OP_hashflagsorsomething = 0x5E, // need to check later and give a better name...
 
 	OP_isdefined = 0x5F,
@@ -136,39 +137,21 @@ typedef enum
 	OP_getdvarcolorgreen = 0x6E,
 	OP_getdvarcolorblue = 0x6F,
 
-	OP_weird1 = 0x70,
-	OP_weird2 = 0x71,
+	OP_GetFirstArrayKey = 0x70,
+	OP_GetNextArrayKey = 0x71,
 	OP_weird3 = 0x72, // this one is easy, too lazy to implement
 
 	OP_GetUndefined2 = 0x73, // does the same thing as OP_GetUndefined
+
+	// OP_Unknown74 = 0x74,
 
 	OP_NOP = 0x75,
 	OP_abort = 0x76,
 	OP_object = 0x77,
 	OP_thread_object = 0x78, // not sure
 
+	// OP_Unknown79 = 0x79,
+
 	OP_EvalLocalVariableRef = 0x7A, // not sure
 	OP_skipdev = 0x7B // does same as OP_jump
 };
-
-/* should generally be correct */
-#define GSC_OP_NEW_VARIABLE	23
-
-#define GSC_OP_ARRAY_INDEX	28
-
-#define GSC_OP_INCREMENT	65
-#define GSC_OP_DECREMENT	66
-
-#define GSC_OP_WAITTILL		85
-#define GSC_OP_NOTIFY		86
-#define GSC_OP_ENDON		87
-#define GSC_OP_WAIT			93
-
-/* correct (functions are inlined) */
-#define FUNC_VectorScale		96
-#define FUNC_AnglesToUp			97
-#define FUNC_AnglesToRight		98
-#define FUNC_AnglesToForward	99
-#define FUNC_AngleClamp180		100
-#define FUNC_VectorsToAngle		101
-#define FUNC_DvarVector3D		107

@@ -279,7 +279,7 @@ shouldkickbyrank()
 	if ( level.rankcap > 0 )
 	{
 	}
-	if ( self.pers["rank"] > level.rankcap )
+	if ( level.pers["rank"] > level.rankcap )
 	{
 		return 1;
 	}
@@ -289,11 +289,11 @@ shouldkickbyrank()
 	if ( level.minprestige == 0 )
 	{
 	}
-	if ( self.pers["plevel"] > 0 )
+	if ( level.pers["plevel"] > 0 )
 	{
 		return 1;
 	}
-	if ( level.minprestige > self.pers["plevel"] )
+	if ( level.minprestige > level.pers["plevel"] )
 	{
 		return 1;
 	}
@@ -334,17 +334,17 @@ getrankxpstat()
 onplayerconnect()
 {
 	level waittill( "connected" );
-	player.pers["rankxp"] = player getrankxpstat();
-	player.pers["codpoints"] = player getcodpointsstat();
-	player.pers["currencyspent"] = player getdstat( "playerstatslist", "currencyspent", "StatValue" );
+	level.pers["rankxp"] = player getrankxpstat();
+	level.pers["codpoints"] = player getcodpointsstat();
+	level.pers["currencyspent"] = player getdstat( "playerstatslist", "currencyspent", "StatValue" );
 	rankid = player getrankforxp( player getrankxp() );
-	player.pers["rank"] = rankid;
-	player.pers["plevel"] = player getdstat( "playerstatslist", "PLEVEL", "StatValue" );
+	level.pers["rank"] = rankid;
+	level.pers["plevel"] = player getdstat( "playerstatslist", "PLEVEL", "StatValue" );
 	if ( player shouldkickbyrank() )
 	{
 		kick( player getentitynumber() );
 	}
-	if ( !(!(IsDefined( player.pers["participation"] ))) )
+	if ( !(!(IsDefined( level.pers["participation"] ))) )
 	{
 		if ( level.gametype == "twar" )
 		{
@@ -353,25 +353,25 @@ onplayerconnect()
 		{
 		}
 	}
-	if ( !(0 < player.pers["participation"]) )
+	if ( !(0 < level.pers["participation"]) )
 	{
-		player.pers["participation"] = 0;
+		level.pers["participation"] = 0;
 	}
-	player.rankupdatetotal = 0;
-	player.cur_ranknum = rankid;
-	assert( IsDefined( player.cur_ranknum ), "rank: " + rankid + " does not have an index, check mp/ranktable.csv" );
+	level.rankupdatetotal = 0;
+	level.cur_ranknum = rankid;
+	assert( IsDefined( level.cur_ranknum ), "rank: " + rankid + " does not have an index, check mp/ranktable.csv" );
 	prestige = player getdstat( "playerstatslist", "plevel", "StatValue" );
 	player setrank( rankid, prestige );
-	player.pers["prestige"] = prestige;
-	if ( !(IsDefined( player.pers["summary"] )) )
+	level.pers["prestige"] = prestige;
+	if ( !(IsDefined( level.pers["summary"] )) )
 	{
-		player.pers["summary"] = [];
-		player.pers["summary"]["xp"] = 0;
-		player.pers["summary"]["score"] = 0;
-		player.pers["summary"]["challenge"] = 0;
-		player.pers["summary"]["match"] = 0;
-		player.pers["summary"]["misc"] = 0;
-		player.pers["summary"]["codpoints"] = 0;
+		level.pers["summary"] = [];
+		level.pers["summary"]["xp"] = 0;
+		level.pers["summary"]["score"] = 0;
+		level.pers["summary"]["challenge"] = 0;
+		level.pers["summary"]["match"] = 0;
+		level.pers["summary"]["misc"] = 0;
+		level.pers["summary"]["codpoints"] = 0;
 	}
 	if ( !(level.rankedmatch) )
 	{
@@ -388,9 +388,9 @@ onplayerconnect()
 		player setdstat( "playerstatslist", "rank", "StatValue", rankid );
 		player setdstat( "playerstatslist", "minxp", "StatValue", getrankinfominxp( rankid ) );
 		player setdstat( "playerstatslist", "maxxp", "StatValue", getrankinfomaxxp( rankid ) );
-		player setdstat( "playerstatslist", "lastxp", "StatValue", getrankxpcapped( player.pers["rankxp"] ) );
+		player setdstat( "playerstatslist", "lastxp", "StatValue", getrankxpcapped( level.pers["rankxp"] ) );
 	}
-	player.explosivekills[0] = 0;
+	level.explosivekills[0] = 0;
 	player thread onplayerspawned();
 	player thread onjoinedteam();
 	player thread onjoinedspectators();
@@ -417,26 +417,26 @@ onplayerspawned()
 {
 	self endon( "disconnect" );
 	self waittill( "spawned_player" );
-	if ( !(IsDefined( self.hud_rankscroreupdate )) )
+	if ( !(IsDefined( level.hud_rankscroreupdate )) )
 	{
-		self.hud_rankscroreupdate = newscorehudelem( self );
-		self.hud_rankscroreupdate.horzalign = "center";
-		self.hud_rankscroreupdate.vertalign = "middle";
-		self.hud_rankscroreupdate.alignx = "center";
-		self.hud_rankscroreupdate.aligny = "middle";
-		self.hud_rankscroreupdate.x = 0;
+		level.hud_rankscroreupdate = newscorehudelem( self );
+		level.horzalign = "center";
+		level.vertalign = "middle";
+		level.alignx = "center";
+		level.aligny = "middle";
+		level.x = 0;
 		if ( self issplitscreen() )
 		{
-			self.hud_rankscroreupdate.y = -15;
+			level.y = -15;
 		}
-		self.hud_rankscroreupdate.y = -60;
-		self.hud_rankscroreupdate.font = "default";
-		self.hud_rankscroreupdate.fontscale = 2.0;
-		self.hud_rankscroreupdate.archived = 0;
-		self.hud_rankscroreupdate.color = ( 1, 1, 0.5 );
-		self.hud_rankscroreupdate.alpha = 0;
-		self.hud_rankscroreupdate.sort = 50;
-		self.hud_rankscroreupdate fontpulseinit();
+		level.y = -60;
+		level.font = "default";
+		level.fontscale = 2;
+		level.archived = 0;
+		level.color = ( 1, 1, 0.5 );
+		level.alpha = 0;
+		level.sort = 50;
+		level.hud_rankscroreupdate fontpulseinit();
 	}
 } // SP = 0x8 - check failed (function may have been decompiled incorrectly)
 
@@ -451,12 +451,12 @@ inccodpoints( amount )
 	{
 		return;
 	}
-	newcodpoints = getcodpointscapped( self.pers["codpoints"] + amount );
-	if ( newcodpoints > self.pers["codpoints"] )
+	newcodpoints = getcodpointscapped( level.pers["codpoints"] + amount );
+	if ( newcodpoints > level.pers["codpoints"] )
 	{
-		self.pers["summary"]["codpoints"] = self.pers["summary"]["codpoints"] + newcodpoints - self.pers["codpoints"];
+		level.pers["summary"]["codpoints"] = level.pers["summary"]["codpoints"] + (newcodpoints - level.pers["codpoints"]);
 	}
-	self.pers["codpoints"] = newcodpoints;
+	level.pers["codpoints"] = newcodpoints;
 	setcodpointsstat( int( newcodpoints ) );
 } // SP = 0x0 - check OK
 
@@ -464,8 +464,18 @@ inccodpoints( amount )
 atleastoneplayeroneachteam()
 {
 	_a498 = level.teams;
-		/* Error: unknown opcode (0x70) */
-} // SP = 0x4 - check failed (function may have been decompiled incorrectly)
+	_k498 = GetFirstArrayKey( _a498 );
+	if ( IsDefined( _k498 ) )
+	{
+		team = _a498[_k498];
+		if ( !(level.playercount[team]) )
+		{
+			return 0;
+		}
+		_k498 = GetNextArrayKey( _a498, _k498 );
+	}
+	return 1;
+} // SP = 0x0 - check OK
 
 // 0x1B88
 giverankxp( type, value, devadd )
@@ -506,7 +516,7 @@ giverankxp( type, value, devadd )
 	}
 	if ( level.rankedmatch )
 	{
-		bbprint( "mpplayerxp", "gametime %d, player %s, type %s, delta %d", GetTime(), self.name, type, value );
+		bbprint( "mpplayerxp", "gametime %d, player %s, type %s, delta %d", GetTime(), level.name, type, value );
 	}
 		/* Error: unknown opcode (0x59) */
 } // SP = 0x8 - check failed (function may have been decompiled incorrectly)
@@ -522,19 +532,19 @@ round_this_number( value )
 updaterank()
 {
 	newrankid = self getrank();
-	if ( newrankid == self.pers["rank"] )
+	if ( newrankid == level.pers["rank"] )
 	{
 		return 0;
 	}
-	oldrank = self.pers["rank"];
-	rankid = self.pers["rank"];
-	self.pers["rank"] = newrankid;
+	oldrank = level.pers["rank"];
+	rankid = level.pers["rank"];
+	level.pers["rank"] = newrankid;
 	if ( rankid <= newrankid )
 	{
 		self setdstat( "playerstatslist", "rank", "StatValue", rankid );
 		self setdstat( "playerstatslist", "minxp", "StatValue", int( level.ranktable[rankid][2] ) );
 		self setdstat( "playerstatslist", "maxxp", "StatValue", int( level.ranktable[rankid][7] ) );
-		self.setpromotion = 1;
+		level.setpromotion = 1;
 		if ( level.rankedmatch )
 		{
 		}
@@ -549,11 +559,11 @@ updaterank()
 		{
 			codpointsearnedforrank = getrankinfocodpointsearned( rankid );
 			inccodpoints( codpointsearnedforrank );
-			if ( !(IsDefined( self.pers["rankcp"] )) )
+			if ( !(IsDefined( level.pers["rankcp"] )) )
 			{
-				self.pers["rankcp"] = 0;
+				level.pers["rankcp"] = 0;
 			}
-			self.pers["rankcp"] = self.pers["rankcp"] + codpointsearnedforrank;
+			level.pers["rankcp"] = level.pers["rankcp"] + codpointsearnedforrank;
 		}
 	}
 	self logstring( "promoted from " + oldrank + " to " + newrankid + " timeplayed: " + self getdstat( "playerstatslist", "time_played_total", "StatValue" ) );
@@ -604,22 +614,22 @@ updaterankscorehud( amount )
 		return;
 	}
 	self endon( "update_score" );
-	self.rankupdatetotal = self.rankupdatetotal + amount;
-	if ( IsDefined( self.hud_rankscroreupdate ) )
+	level.rankupdatetotal = level.rankupdatetotal + amount;
+	if ( IsDefined( level.hud_rankscroreupdate ) )
 	{
-		if ( self.rankupdatetotal < 0 )
+		if ( level.rankupdatetotal < 0 )
 		{
-			self.hud_rankscroreupdate.label = &"";
-			self.hud_rankscroreupdate.color = ( 0.73, 0.19, 0.19 );
+			level.label = &"";
+			level.color = ( 0.73, 0.19, 0.19 );
 		}
-		self.hud_rankscroreupdate.label = &"MP_PLUS";
-		self.hud_rankscroreupdate.color = ( 1, 1, 0.5 );
-		self.hud_rankscroreupdate setvalue( self.rankupdatetotal );
-		self.hud_rankscroreupdate.alpha = 0.85;
-		self.hud_rankscroreupdate thread fontpulse( self );
-		self.hud_rankscroreupdate fadeovertime( 0.75 );
-		self.hud_rankscroreupdate.alpha = 0;
-		self.rankupdatetotal = 0;
+		level.label = &"MP_PLUS";
+		level.color = ( 1, 1, 0.5 );
+		level.hud_rankscroreupdate setvalue( level.rankupdatetotal );
+		level.alpha = 0.85;
+		level.hud_rankscroreupdate thread fontpulse( self );
+		level.hud_rankscroreupdate fadeovertime( 0.75 );
+		level.alpha = 0;
+		level.rankupdatetotal = 0;
 	}
 } // SP = 0x24 - check failed (function may have been decompiled incorrectly)
 
@@ -634,68 +644,68 @@ updatemomentumhud( amount, reason, reasonvalue )
 		return;
 	}
 	self endon( "update_score" );
-	self.rankupdatetotal = self.rankupdatetotal + amount;
-	if ( IsDefined( self.hud_rankscroreupdate ) )
+	level.rankupdatetotal = level.rankupdatetotal + amount;
+	if ( IsDefined( level.hud_rankscroreupdate ) )
 	{
-		if ( self.rankupdatetotal < 0 )
+		if ( level.rankupdatetotal < 0 )
 		{
-			self.hud_rankscroreupdate.label = &"";
-			self.hud_rankscroreupdate.color = ( 0.73, 0.19, 0.19 );
+			level.label = &"";
+			level.color = ( 0.73, 0.19, 0.19 );
 		}
-		self.hud_rankscroreupdate.label = &"MP_PLUS";
-		self.hud_rankscroreupdate.color = ( 1, 1, 0.5 );
-		self.hud_rankscroreupdate setvalue( self.rankupdatetotal );
-		self.hud_rankscroreupdate.alpha = 0.85;
-		self.hud_rankscroreupdate thread fontpulse( self );
-		if ( IsDefined( self.hud_momentumreason ) )
+		level.label = &"MP_PLUS";
+		level.color = ( 1, 1, 0.5 );
+		level.hud_rankscroreupdate setvalue( level.rankupdatetotal );
+		level.alpha = 0.85;
+		level.hud_rankscroreupdate thread fontpulse( self );
+		if ( IsDefined( level.hud_momentumreason ) )
 		{
 			if ( IsDefined( reason ) )
 			{
 				if ( IsDefined( reasonvalue ) )
 				{
-					self.hud_momentumreason.label = reason;
-					self.hud_momentumreason setvalue( reasonvalue );
+					level.label = reason;
+					level.hud_momentumreason setvalue( reasonvalue );
 				}
-				self.hud_momentumreason.label = reason;
-				self.hud_momentumreason setvalue( amount );
-				self.hud_momentumreason.alpha = 0.85;
-				self.hud_momentumreason thread fontpulse( self );
+				level.label = reason;
+				level.hud_momentumreason setvalue( amount );
+				level.alpha = 0.85;
+				level.hud_momentumreason thread fontpulse( self );
 			}
-			self.hud_momentumreason fadeovertime( 0.01 );
-			self.hud_momentumreason.alpha = 0;
+			level.hud_momentumreason fadeovertime( 0.01 );
+			level.alpha = 0;
 		}
-		self.hud_rankscroreupdate fadeovertime( 0.75 );
-		self.hud_rankscroreupdate.alpha = 0;
-		if ( IsDefined( self.hud_momentumreason ) )
+		level.hud_rankscroreupdate fadeovertime( 0.75 );
+		level.alpha = 0;
+		if ( IsDefined( level.hud_momentumreason ) )
 		{
 		}
 		if ( IsDefined( reason ) )
 		{
-			self.hud_momentumreason fadeovertime( 0.75 );
-			self.hud_momentumreason.alpha = 0;
+			level.hud_momentumreason fadeovertime( 0.75 );
+			level.alpha = 0;
 		}
-		self.rankupdatetotal = 0;
+		level.rankupdatetotal = 0;
 	}
 } // SP = 0x24 - check failed (function may have been decompiled incorrectly)
 
 // 0x250C
 removerankhud()
 {
-	if ( IsDefined( self.hud_rankscroreupdate ) )
+	if ( IsDefined( level.hud_rankscroreupdate ) )
 	{
-		self.hud_rankscroreupdate.alpha = 0;
+		level.alpha = 0;
 	}
-	if ( IsDefined( self.hud_momentumreason ) )
+	if ( IsDefined( level.hud_momentumreason ) )
 	{
-		self.hud_momentumreason.alpha = 0;
+		level.alpha = 0;
 	}
 } // SP = 0x0 - check OK
 
 // 0x253C
 getrank()
 {
-	rankxp = getrankxpcapped( self.pers["rankxp"] );
-	rankid = self.pers["rank"];
+	rankxp = getrankxpcapped( level.pers["rankxp"] );
+	rankid = level.pers["rank"];
 	if ( rankxp < getrankinfominxp( rankid ) + getrankinfoxpamt( rankid ) )
 	{
 		return rankid;
@@ -731,13 +741,13 @@ getrankforxp( xpval )
 getspm()
 {
 	ranklevel = self getrank() + 1;
-	return 3 + ranklevel * 0.5 * 10;
+	return (3 + ranklevel * 0.5) * 10;
 } // SP = 0x0 - check OK
 
 // 0x2654
 getrankxp()
 {
-	return getrankxpcapped( self.pers["rankxp"] );
+	return getrankxpcapped( level.pers["rankxp"] );
 } // SP = 0x0 - check OK
 
 // 0x2670
@@ -749,19 +759,19 @@ incrankxp( amount )
 	}
 	xp = self getrankxp();
 	newxp = getrankxpcapped( xp + amount );
-	if ( self.pers["rank"] == level.maxrank )
+	if ( level.pers["rank"] == level.maxrank )
 	{
 	}
 	if ( newxp >= getrankinfomaxxp( level.maxrank ) )
 	{
 		newxp = getrankinfomaxxp( level.maxrank );
 	}
-	xpincrease = getrankxpcapped( newxp ) - self.pers["rankxp"];
+	xpincrease = getrankxpcapped( newxp ) - level.pers["rankxp"];
 	if ( xpincrease < 0 )
 	{
 		xpincrease = 0;
 	}
-	self.pers["rankxp"] = getrankxpcapped( newxp );
+	level.pers["rankxp"] = getrankxpcapped( newxp );
 	return xpincrease;
 } // SP = 0x0 - check OK
 
@@ -769,7 +779,7 @@ incrankxp( amount )
 syncxpstat()
 {
 	xp = getrankxpcapped( self getrankxp() );
-	cp = getcodpointscapped( int( self.pers["codpoints"] ) );
+	cp = getcodpointscapped( int( level.pers["codpoints"] ) );
 	self setdstat( "playerstatslist", "rankxp", "StatValue", xp );
 	self setdstat( "playerstatslist", "codpoints", "StatValue", cp );
 } // SP = 0x0 - check OK

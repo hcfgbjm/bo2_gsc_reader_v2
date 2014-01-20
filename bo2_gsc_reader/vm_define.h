@@ -63,7 +63,7 @@ enum VariableType
 	type_animation,
 	type_developer_codepos,
 	type_decompiled_string, // added by myself, it means that the value is a char* and points to a decompiled string like "GetDvarFloat ( #"scr_xpscale" )"
-	type_buildable_operation
+	type_buildable_operation,
 };
 
 // added by myself to make decompilation easier (this is only present if type is type_unbuilt_operation)
