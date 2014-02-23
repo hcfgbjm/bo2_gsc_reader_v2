@@ -1598,18 +1598,16 @@ BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 {
 	BYTE* currentPos = opcodesPtr;
-	opcodesPtr += 1;// opcode size 1 byte
+	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
 		AddString("// OP_switch( %s );", true, StackGetLastValue());
 		WriteRegisterInfo((BYTE*)gscBuffer, currentPos - 1);
 	}
 
-	cout << "currentPos: 0x" << hex << (DWORD)currentPos << endl;
-
 	currentPos = (BYTE*)((*(DWORD*)GET_ALIGNED_DWORD(currentPos) + (DWORD)GET_ALIGNED_DWORD(currentPos) + 7) & 0xFFFFFFFC);
 
-	int caseCount = *(DWORD *)currentPos;
+	DWORD caseCount = *(DWORD*)currentPos;
 
 	currentPos += 4;
 
@@ -1618,7 +1616,7 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	IncTabLevel();
 
 	DWORD ipOffset = 0;
-	for(int i = 0; i < caseCount; i++)
+	for (DWORD i = 0; i < caseCount; i++)
 	{
 		// Case name/value
 		BYTE *label				= GET_ALIGNED_DWORD(currentPos);
@@ -1633,7 +1631,7 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 		//if (!strcmp((char*)StackGetLastValue(), (char *)(gscBuffer + caseLabelOffset))) // found in game code... needed?
 			//break;
 
-		if(caseLabelOffset == 0)
+		if (caseLabelOffset == 0)
 			AddString("default:\n", true);
 		else
 			AddString("case \"%s\":\n", true, (char *)(gscBuffer + caseLabelOffset));
@@ -1651,10 +1649,12 @@ BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 // 0x5A
 BYTE *OP_endswitch_Decompile(DWORD gscBuffer, BYTE *opcodesPtr)
 {
-	opcodesPtr += 1;// opcode size 1 byte
-	BYTE *currentPos = GET_ALIGNED_DWORD(opcodesPtr);
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
 
-	int caseCount = *(int *)currentPos;
+	currentPos = GET_ALIGNED_DWORD(currentPos);
+
+	DWORD caseCount = *(DWORD*)currentPos;
 
 	// Skip each case block
 	currentPos = GET_ALIGNED_DWORD(currentPos + 4) + (8 * caseCount);
