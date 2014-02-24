@@ -263,15 +263,46 @@ void DecompileGSC()
 	}
 	AddString("\n", false);*/
 
+	// test decompiling
+	/*externalFunction* currentExternalFunction = (externalFunction*)(gscBuffer + gsc->externalFunctions);
+	for (WORD i = 0; i < gsc->numOfExternalFunctions; i++)
+	{
+		if (currentExternalFunction->gscOfFunction && *(char*)(gscBuffer + currentExternalFunction->gscOfFunction))
+			cout << (char*)(gscBuffer + currentExternalFunction->gscOfFunction) << "::";
+		if (currentExternalFunction->name)
+			cout << (char*)(gscBuffer + currentExternalFunction->name);
+		cout << ":" << endl;
+		switch (currentExternalFunction->flag & 15)
+		{
+		case FLAG_1:
+			cout << "FLAG_1";
+			break;
+		case FLAG_2:
+			cout << "FLAG_2";
+			break;
+		case FLAG_3:
+			cout << "FLAG_3";
+			break;
+		case FLAG_4:
+			cout << "FLAG_4";
+			break;
+		case FLAG_5:
+			cout << "FLAG_5";
+			break;
+		}
+		cout << endl << endl;
+
+		currentExternalFunction = (externalFunction*)((DWORD)currentExternalFunction + sizeof(DWORD) * currentExternalFunction->numOfReferences);
+		currentExternalFunction++;
+	}
+	cin.get();*/
+
 	// #include decompiling
 	includeStruct* currentInclude = (includeStruct*)(gscBuffer + gsc->includeStructs);
 	for (BYTE i = 0; i < gsc->numOfIncludes; i++)
 	{
 		AddString("#include ", false);
 		memset(fixedPath, 0x00, MAX_PATH);
-		//NOTE @Nukem - is this needed? Generally the files are forward slashes anyways
-		//NOTE @kokole - bo1 gsc had \ and the strings in compiled gsc have / so yea
-		//however the CoD compiler can parse them either way
 		FixSlashes((char*)(gscBuffer + currentInclude->string), fixedPath);
 		AddString(fixedPath, false);
 		AddString(";\n", false);
@@ -282,7 +313,7 @@ void DecompileGSC()
 	if (!gsc->numOfUsinganimtree)
 		AddString("\n", false);
 
-	// #using_animtree decompiling - NOT FULLY TESTED, I NEED A GSC WITH MORE THAN 1 #using_animtree
+	// #using_animtree decompiling
 	usinganimtreeStruct* currentUsinganimtree = (usinganimtreeStruct*)(gscBuffer + gsc->usinganimtreeStructs);
 	for (BYTE i = 0; i < gsc->numOfUsinganimtree; i++)
 	{
@@ -293,6 +324,7 @@ void DecompileGSC()
 		AddString("\" );\n", false);
 		currentUsinganimtree = (usinganimtreeStruct*)((DWORD)currentUsinganimtree + sizeof(DWORD) * currentUsinganimtree->numOfReferences);
 		currentUsinganimtree = (usinganimtreeStruct*)((DWORD)currentUsinganimtree + sizeof(animReference) * currentUsinganimtree->numOfAnimReferences);
+		currentUsinganimtree++;
 	}
 	if (gsc->numOfUsinganimtree) // add 2 newlines if there were any using_animtree
 		AddString("\n\n", false);

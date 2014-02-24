@@ -788,7 +788,7 @@ BYTE* OP_ScriptFunctionCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptFunctionCall( \"%s\" );", true, FunctionName);
@@ -805,6 +805,8 @@ BYTE* OP_ScriptFunctionCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, false, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
+	free(FunctionName);
+
 	return currentPos;
 }
 
@@ -814,7 +816,7 @@ BYTE* OP_ScriptFunctionCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptFunctionCallPointer( \"%s\" );", true, FunctionName);
@@ -827,7 +829,7 @@ BYTE* OP_ScriptFunctionCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, true, false, false, *(BYTE*)(currentPos) == OP_DecTop);
 
-	free(FunctionName); // free the function name passed to call_decompile
+	free(FunctionName);
 
 	return currentPos;
 }
@@ -838,7 +840,7 @@ BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptMethodCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
@@ -855,6 +857,8 @@ BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, false, true, false, *(BYTE*)(currentPos) == OP_DecTop);
 
+	free(FunctionName);
+
 	return currentPos;
 }
 
@@ -864,7 +868,7 @@ BYTE* OP_ScriptMethodCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptMethodCallPointer( \"%s\" );", true, FunctionName);
@@ -877,7 +881,7 @@ BYTE* OP_ScriptMethodCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, true, true, false, *(BYTE*)(currentPos) == OP_DecTop);
 
-	free(FunctionName); // free the function name passed to call_decompile
+	free(FunctionName);
 
 	return currentPos;
 }
@@ -888,7 +892,7 @@ BYTE* OP_ScriptThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
@@ -905,6 +909,8 @@ BYTE* OP_ScriptThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, false, false, true, *(BYTE*)(currentPos) == OP_DecTop);
 
+	free(FunctionName);
+
 	return currentPos;
 }
 
@@ -914,7 +920,7 @@ BYTE* OP_ScriptThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptThreadCallPointer( \"%s\" );", true, FunctionName);
@@ -927,7 +933,7 @@ BYTE* OP_ScriptThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, true, false, true, *(BYTE*)(currentPos) == OP_DecTop);
 
-	free(FunctionName); // free the function name passed to call_decompile
+	free(FunctionName);
 
 	return currentPos;
 }
@@ -938,7 +944,7 @@ BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1)));
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptMethodThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
@@ -955,6 +961,8 @@ BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr)
 
 	call_decompile(FunctionName, true, NULL, false, true, true, *(BYTE*)(currentPos) == OP_DecTop);
 
+	free(FunctionName);
+
 	return currentPos;
 }
 
@@ -964,7 +972,7 @@ BYTE* OP_ScriptMethodThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesP
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = MallocAndSprintf("%s", (char*)StackGetLastValue());
+	char* FunctionName = funcname_prepend_gscOfFunction(gscBuffer, (char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	AddString("// OP_ScriptMethodThreadCallPointer( \"%s\" );", true, FunctionName);

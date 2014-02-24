@@ -61,7 +61,7 @@ typedef struct _gscString
 {
 	WORD string;			// 0x00 - A relative pointer to the string
 	BYTE numOfReferences;	// 0x02 - Amount of references to this string
-	BYTE type;				// 0x04 - Can only be 0 or 1
+	BYTE type;				// 0x03 - Can only be 0 or 1
 	/*
 		NOTE: This is included in this struct, but as we can't create dynamic structs, we just create another struct which will be used dynamically in the code
 		DWORD references[numOfReferences];	//	Relative pointers that point to code that references this string (the game writes a
@@ -86,7 +86,7 @@ typedef struct _gscFunction
 // All possible flags for externalFunction:
 /*
 	- For all flags:
-		The game does it's stuff to find the function, and when it finds it, it writes the correct opcode (which can be x, x or x), the
+		The game does it's stuff to find the function, and when it finds it, it writes the correct function type opcode, the
 		correct number of parameters and the function's address to the places where the function is referenced (its referenced in code always)
 		The offsets at which it writes the opcode and the number of parameters are: reference + 0x00 for opcode and reference + 0x01 for number of parameters
 	
@@ -123,14 +123,15 @@ typedef struct _gscFunction
 typedef struct _externalFunction
 {
 	WORD name;				// 0x00 - A relative pointer to the name of this function
-	WORD gscOfFunction;		// 0x02 - GSC of the function, example: maps/mp/gametypes/_hud::fontpulse (gscOfFunction::name)
+	WORD gscOfFunction;		// 0x02 - GSC of the function, example: maps/mp/gametypes/_hud::fontpulse (gscOfFunction::name) - WARNING: it can be 0x00, and that
+							//		  may mean that IT'S NOT ACTUALLY EXTERNAL (so this struct may be renamed to something like gscFunctionResolver, but meh)
 	WORD numOfReferences;	// 0x04 -
 	BYTE numOfParameters;	// 0x06 - Function parameter count
 	BYTE flag;				// 0x07 - 
 	/*
 		Possible flag values (not sure if all of them):
 
-		- The game makes a switch((flag & 15) - 1) // this strips the byte in half and then substracts 1 from the second half
+		- The game makes a switch ((flag & 15) - 1) // this strips the byte in half and then substracts 1 from the second half
 		// so if you have 0x12, it will take 2 - 1 = 1
 		// the switch only accepts values from 0 to 4 (else you will get an unresolved external error)
 
@@ -143,11 +144,11 @@ typedef struct _externalFunction
 } externalFunction;
 
 // Replaces bytes in a GSC file at load time
-struct gscRelocation
+typedef struct _gscRelocation
 {
-	DWORD value;	// 0x04 - Value of bytes to be inserted
-	DWORD offset;	// 0x00 - File offset (where to replace the bytes)
-};
+	DWORD value;	// 0x00 - Value of bytes to be inserted
+	DWORD offset;	// 0x04 - File offset (where to replace the bytes)
+} gscRelocation;
 
 // RVA
 // means that you need to make *gsc_allocated_ptr* + THIS_COD9_GSC->...

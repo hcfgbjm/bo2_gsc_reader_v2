@@ -102,6 +102,40 @@ void waittill_call_decompile(char* functionName, BYTE* currentPos)
 	AddString((char*)_FunctionString.c_str(), true);
 }
 
+// ip = RELATIVE instruction pointer that points to the call opcode (for example 0x2E, which is OP_ScriptFunctionCall)
+// if we find out that the call is external (by searching through externalFunctions from the gsc header), we prepend
+// the right gscOfFunction to functionName
+char* funcname_prepend_gscOfFunction(DWORD gscBuffer, char* functionName, DWORD ip)
+{
+	COD9_GSC* gsc = (COD9_GSC*)gscBuffer;
+
+	externalFunction* currentExternalFunction = (externalFunction*)(gscBuffer + gsc->externalFunctions);
+	DWORD* references = (DWORD*)(currentExternalFunction + 1);
+	for (WORD i = 0; i < gsc->numOfExternalFunctions; i++)
+	{
+		for (WORD i2 = 0; i2 < currentExternalFunction->numOfReferences; i2++)
+		{
+			if (references[i2] == ip && currentExternalFunction->gscOfFunction && *(char*)(gscBuffer + currentExternalFunction->gscOfFunction))
+			{
+				// found the externalFunction struct for this call - we return gscOfFunction::funtionName
+				char* result = MallocAndSprintf("%s::%s", gscBuffer + currentExternalFunction->gscOfFunction, functionName);
+
+				return result;
+			}
+		}
+
+		currentExternalFunction = (externalFunction*)((DWORD)currentExternalFunction + sizeof(DWORD) * currentExternalFunction->numOfReferences);
+		currentExternalFunction++;
+
+		references = (DWORD*)(currentExternalFunction + 1);
+	}
+
+	// couldn't find externalFunction struct for this call - we return functionName
+	char* result = MallocAndSprintf("%s", functionName);
+
+	return result;
+}
+
 // if hasPrecodepos is true, it ignores _numOfParameters
 void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused)
 {
