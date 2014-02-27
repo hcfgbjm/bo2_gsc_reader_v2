@@ -192,6 +192,12 @@ void GSCDecompilerClass::call_decompile(char* functionName, bool hasPrecodepos, 
 		DecompilerOut("%s;\n", true, FunctionString);
 }
 
+int switchtable_sortfunc(const void* a, const void* b)
+{
+	// no need to align because the structure is 8 bytes itself anyway
+	return (*(__int32*)a - *(__int32*)b);
+}
+
 BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 {
 	currentPos = GET_ALIGNED_DWORD(*(DWORD*)GET_ALIGNED_DWORD(currentPos) + GET_ALIGNED_DWORD(currentPos) + 4);
@@ -212,29 +218,40 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 	DecompilerOut("{\n", true);
 	IncTabLevel();
 
+	// we generate the switch IPs to a buffer, and sort the copied switch table by IP in ascending order
+	BYTE* switchIPTable = (BYTE*)malloc(4 * caseCount);
+	BYTE* curSwitchIPTablePos = switchIPTable;
+
+	for (DWORD i = 0; i < caseCount; i++)
+		*(DWORD*)(switchIPTable + i * 4) = (DWORD)(currentPos + i * 8 + 8) + *(__int32*)(currentPos + i * 8 + 4) - gscBuffer;
+
+	qsort(switchIPTable, caseCount, 4, switchtable_sortfunc);
+
 	__int32 ipOffset = 0;
 	for (DWORD i = 0; i < caseCount; i++)
 	{
 		// Case name/value
-		BYTE* label = GET_ALIGNED_DWORD(currentPos);
+		BYTE* label = currentPos;
 		DWORD caseLabelOffset = *(DWORD*)label;
 
 		// Case code pointer
-		BYTE* ip = GET_ALIGNED_DWORD(label + 4);
+		BYTE* ip = curSwitchIPTablePos;
 		ipOffset = *(DWORD*)ip;
 
-		currentPos = ip + 4;
+		currentPos += 8;
 
 		// currentPos + ipOffset here = code ip for this case
-		if (i + 1 == caseCount && !caseLabelOffset) // if it's last iteration and caseLabelOffset is 0 ( = default case)
+		if (!caseLabelOffset) // if caseLabelOffset is 0 this is a default case)
 			DecompilerOut("default:\n", true);
 		else
 			DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelOffset));
 
-		DWORD curCaseIP = (DWORD)(currentPos + ipOffset - gscBuffer); // relative instruction pointer for current case
-		DWORD nextCaseIP = i + 1 == caseCount ? 0 : (DWORD)(currentPos + 8) + (*(DWORD*)GET_ALIGNED_DWORD(GET_ALIGNED_DWORD(currentPos) + 4)) - gscBuffer; // relative instruction pointer for next case
+		DWORD curCaseIP = *(DWORD*)curSwitchIPTablePos; // relative instruction pointer for current case
+		DWORD nextCaseIP = i + 1 == caseCount ? 0 : *(DWORD*)(curSwitchIPTablePos + 4); // relative instruction pointer for next case
 
-		// only decompile the code of the case if only one case is left or if the current case differs from the next one
+		curSwitchIPTablePos += 4;
+
+		// only decompile the code of the case if the current case differs from the next one
 		if (!nextCaseIP || curCaseIP != nextCaseIP)
 		{
 			// find the case's size of code and detect if it has a break at the end
@@ -279,6 +296,8 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 			}
 		}
 	}
+
+	free(switchIPTable);
 
 	StackPop();
 
