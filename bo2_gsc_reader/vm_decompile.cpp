@@ -241,7 +241,7 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 		currentPos += 8;
 
 		// currentPos + ipOffset here = code ip for this case
-		if (!caseLabelOffset) // if caseLabelOffset is 0 this is a default case)
+		if (!caseLabelOffset) // if caseLabelOffset is 0 this is a default case
 			DecompilerOut("default:\n", true);
 		else
 			DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelOffset));
@@ -264,10 +264,23 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 				// if it's a jump, we check if it jumps at the end of the switch, if yes, then we read all the opcodes of the case and there's a break in the end
 				// if it's an endswitch, then we can put or not a break, but i prefer to put it
 				// if there is a next case and we reach it, we don't put a break
-				if (*curCasePos == OP_jump && (GET_ALIGNED_WORD(curCasePos + 1) + *(__int16*)(GET_ALIGNED_WORD(curCasePos + 1)) + 2) == switchEndIP)
+				if (*curCasePos == OP_jump)
 				{
-					caseHasBreak = true;
-					break;
+					BYTE* jumpsToIP = GET_ALIGNED_WORD(curCasePos + 1) + *(__int16*)(GET_ALIGNED_WORD(curCasePos + 1)) + 2;
+
+					if (jumpsToIP == switchEndIP)
+					{
+						caseHasBreak = true;
+						break;
+					}
+					else if (jumpsToIP > switchEndIP || jumpsToIP < (BYTE*)(gscBuffer + curCaseIP)) // OP_jump can't jump outside the case...
+					{
+						IncTabLevel();
+						DecompilerOut("// OP_jump that jumps outside the case's boundaries detected\n", true);
+						DecTabLevel();
+
+						goto case_loop_continue;
+					}
 				}
 				else if (*curCasePos == OP_endswitch)
 				{
@@ -285,9 +298,9 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 			{
 				IncTabLevel();
 
-				GSCDecompilerClass* gscDecompiler = new GSCDecompilerClass();
-				DecompilerOut((char*)(gscDecompiler->decompile(&this->stack, gscBuffer, curCaseIP, caseCodeSize, false, curTabLevel)).c_str(), false);
-				delete gscDecompiler;
+				// GSCDecompilerClass must be created in a scope! (we're currently in if (caseCodeSize) scope)
+				GSCDecompilerClass gscDecompiler;
+				DecompilerOut((char*)(gscDecompiler.decompile(&this->stack, gscBuffer, curCaseIP, caseCodeSize, false, curTabLevel)).c_str(), false);
 
 				if (caseHasBreak)
 					DecompilerOut("break;\n", true);
@@ -295,6 +308,8 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 				DecTabLevel();
 			}
 		}
+
+case_loop_continue: ;
 	}
 
 	free(switchIPTable);

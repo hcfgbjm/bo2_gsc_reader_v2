@@ -398,7 +398,7 @@ DEF_DECOMPILE(GetString)
 
 			i++; // because we've added another character that doesn't need a check
 		}
-		else if (String[i] == '%') // fix for strings that have modulus in them (so DecompilerOut or AddString doesn't crash)
+		else if (String[i] == '%') // fix for strings that have modulus in them (so DecompilerOut doesn't crash)
 		{
 			String[i] = 0x00;
 			StringTemp = MallocAndSprintf("%s%s%s", String, "%%", String + i + 1);
@@ -575,7 +575,8 @@ DEF_DECOMPILE(GetAnimation)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* Animation = MallocAndSprintf("%s%s", "%", gscBuffer + *(WORD*)(GET_ALIGNED_DWORD(currentPos)));
+	// double modulus fix like in OP_GetString
+	char* Animation = MallocAndSprintf("%s%s", "%%", gscBuffer + *(WORD*)(GET_ALIGNED_DWORD(currentPos)));
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_GetAnimation( %s );", true, Animation);

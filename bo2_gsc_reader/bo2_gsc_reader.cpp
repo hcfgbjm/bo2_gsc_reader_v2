@@ -347,6 +347,8 @@ void DecompileGSC()
 			AddString("\n\n", false);
 		currentFunction++;
 	}
+
+	/* PUT A BP HERE FOR DECOMPILER MEMORY LEAK TESTING (DEBUG MODE ONLY) */
 }
 
 int wmain(int argc, wchar_t *argv[])
