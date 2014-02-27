@@ -6,7 +6,7 @@
 
 void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 {
-	//write the offset from the compiled GSC file
+	// write the offset of the function
 	AddString("// 0x%X\n", false, gscFunc->start);
 
 	AddString("%s(", false, gscBuffer + gscFunc->name);
@@ -54,8 +54,6 @@ end_param_decompilation:
 	// decompile function opcodes
 	string decompiledCode = gscDecompiler.decompile(NULL, gscBuffer, gscFunc->start, gscFuncSize, true, 1);
 
-	//cout << decompiledCode.c_str() << endl;
-
 	AddString((char*)decompiledCode.c_str(), false);
 
 	AddString("\n}", false);
@@ -85,7 +83,6 @@ DWORD gsclde(BYTE* opcodesPtr)
 	case OP_GetAnim:
 	case OP_GetGameRef: // ADD DECOMPILATION SUPPORT FOR THIS (WTFFFF)
 	case OP_RemoveLocalVariables: // ADD SUPPORT FOR THIS TOO
-	case OP_EvalLocalVariableCached:
 	case OP_EvalArray:
 	case OP_EvalArrayRef:
 	case OP_ClearArray:
@@ -153,6 +150,7 @@ DWORD gsclde(BYTE* opcodesPtr)
 		return 1;
 	case OP_GetByte:
 	case OP_GetNegByte:
+	case OP_EvalLocalVariableCached:
 	case OP_EvalLocalArrayRefCached: // ADD SUPPORT FOR THIS TOO
 	case OP_SafeSetVariableFieldCached: // ADD SUPPORT FOR THIS TOO
 	case OP_SafeSetWaittillVariableFieldCached:

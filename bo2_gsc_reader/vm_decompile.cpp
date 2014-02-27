@@ -244,7 +244,11 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 		if (!caseLabelOffset) // if caseLabelOffset is 0 this is a default case
 			DecompilerOut("default:\n", true);
 		else
+		{
+			// add int or string detection (which will fix crashes in _utility.gsc)
+
 			DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelOffset));
+		}
 
 		DWORD curCaseIP = *(DWORD*)curSwitchIPTablePos; // relative instruction pointer for current case
 		DWORD nextCaseIP = i + 1 == caseCount ? 0 : *(DWORD*)(curSwitchIPTablePos + 4); // relative instruction pointer for next case
@@ -300,7 +304,7 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 
 				// GSCDecompilerClass must be created in a scope! (we're currently in if (caseCodeSize) scope)
 				GSCDecompilerClass gscDecompiler;
-				DecompilerOut((char*)(gscDecompiler.decompile(&this->stack, gscBuffer, curCaseIP, caseCodeSize, false, curTabLevel)).c_str(), false);
+				decompiledBuffer.append((char*)(gscDecompiler.decompile(&this->stack, gscBuffer, curCaseIP, caseCodeSize, false, curTabLevel)).c_str());
 
 				if (caseHasBreak)
 					DecompilerOut("break;\n", true);
@@ -443,6 +447,34 @@ void GSCDecompilerClass::build_operation(int index)
 		cin.get();
 		ExitProcess(-1);
 	}
+
+	#ifdef _DEBUG
+	OutputDebugStringA("\n\nbuild_operation struct dump:\n");
+
+	char dbgOutputBuf[1024];
+	OutputDebugStringA("- operands:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperands; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%s\n", operatorsInfo->operandList[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("- operators:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%d\n", operatorsInfo->operatorList[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("- execution order:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%d\n", operatorsInfo->operatorExecutionOrder[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("Dump finished.\n");
+	#endif /* _DEBUG */
 
 	// new operators info which will be used to make the operation build easier
 	// basically this one is allowed to have multiple operands in operandList[x] and parenthesis in them
@@ -625,7 +657,7 @@ void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 		operatorsInfo->operatorExecutionOrder = (DWORD*)malloc(sizeof(DWORD) * operatorsInfo->numOfOperators);
 		operatorsInfo->operatorExecutionOrder[0] = 0; // means 1st operation to be executed
 	}
-	// if one of the 2 last values is of type_unbuilt_operation but the other one is type_decompiled_string
+	// if one of the 2 last values is of type_buildable_operation but the other one is type_decompiled_string
 	else if ((StackGetValueType(1) == type_decompiled_string || StackGetValueType(0) == type_decompiled_string) && (StackGetValueType(1) == type_buildable_operation || StackGetValueType(0) == type_buildable_operation))
 	{
 		OperatorsInfo* oldOperatorsInfo;
@@ -676,7 +708,7 @@ void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 			);
 		operatorsInfo->operatorExecutionOrder[isLeftOperand ? 0 : operatorsInfo->numOfOperators - 1] = operatorsInfo->numOfOperators - 1;
 	}
-	// if both last values are of type type_unbuilt_operation, then we merge them
+	// if both last values are of type type_buildable_operation, then we merge them
 	else
 	{
 		// get the left & right operators info (like in "v1 * v2 + v3 * v4" when operatorType is "+", left operator info would represent "v1 * v2" and right "v3 * v4")
@@ -696,7 +728,7 @@ void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 		for (DWORD i = 0; i < rightOldOperatorsInfo->numOfOperands; i++)
 		{
 			operatorsInfo->operandList[leftOldOperatorsInfo->numOfOperands + i] = (char*)malloc(strlen(rightOldOperatorsInfo->operandList[i]) + 1);
-			strcpy_s(operatorsInfo->operandList[rightOldOperatorsInfo->numOfOperands + i], strlen(rightOldOperatorsInfo->operandList[i]) + 1, rightOldOperatorsInfo->operandList[i]);
+			strcpy_s(operatorsInfo->operandList[leftOldOperatorsInfo->numOfOperands + i], strlen(rightOldOperatorsInfo->operandList[i]) + 1, rightOldOperatorsInfo->operandList[i]);
 		}
 
 		// calculate the number of operators and allocate the list respectively
@@ -725,12 +757,42 @@ void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 			sizeof(DWORD) * leftOldOperatorsInfo->numOfOperators
 			);
 		operatorsInfo->operatorExecutionOrder[leftOldOperatorsInfo->numOfOperators] = operatorsInfo->numOfOperators - 1; // latest execution order is operatorsInfo->numOfOperators - 1
-		memcpy(
-			&operatorsInfo->operatorExecutionOrder[leftOldOperatorsInfo->numOfOperators + 1],
-			rightOldOperatorsInfo->operatorExecutionOrder,
-			sizeof(DWORD) * rightOldOperatorsInfo->numOfOperators
-			);
+
+		// we have to manually set the right part of the operation's execution order
+		for (DWORD i = 0; i < rightOldOperatorsInfo->numOfOperators; i++)
+		{
+			operatorsInfo->operatorExecutionOrder[leftOldOperatorsInfo->numOfOperators + 1 + i] =
+				rightOldOperatorsInfo->operatorExecutionOrder[i] + leftOldOperatorsInfo->numOfOperators;
+		}
 	}
+
+	#ifdef _DEBUG
+	OutputDebugStringA("\n\noperator_decompile struct dump:\n");
+
+	char dbgOutputBuf[1024];
+	OutputDebugStringA("- operands:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperands; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%s\n", operatorsInfo->operandList[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("- operators:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%d\n", operatorsInfo->operatorList[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("- execution order:\n");
+	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
+	{
+		sprintf_s(dbgOutputBuf, "%d\n", operatorsInfo->operatorExecutionOrder[i]);
+		OutputDebugStringA(dbgOutputBuf);
+	}
+
+	OutputDebugStringA("Dump finished.\n");
+	#endif /* _DEBUG */
 	
 	StackPop();
 	StackPop();

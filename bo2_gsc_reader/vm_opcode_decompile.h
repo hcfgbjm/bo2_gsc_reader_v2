@@ -50,7 +50,7 @@ private:
 	ObjectType CurrentObject;
 	char* CastedObject;
 	
-	char VariableNameBuffer[256];
+	char VariableNameBuffer[512];
 
 	// decompiler helper functions //
 	char* GetStringForCurrentObject();
@@ -230,8 +230,6 @@ public:
 		this->decompileStart = 0;
 		this->decompileSize = 0;
 		this->isFunction = false;
-
-		memset(&this->stack, 0, sizeof(vmStack_s));
 
 		this->CurrentObject = OBJECT_NONE;
 		this->CastedObject = 0;

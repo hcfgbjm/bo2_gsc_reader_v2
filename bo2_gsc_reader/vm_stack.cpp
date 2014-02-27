@@ -2,6 +2,8 @@
 
 void GSCDecompilerClass::InitStacks()
 {
+	memset(&this->stack, 0, sizeof(vmStack_s));
+
 	stack.currentVar = stack.vars - 1;
 	stack.currentLocalVar = stack.localVars - 1;
 }

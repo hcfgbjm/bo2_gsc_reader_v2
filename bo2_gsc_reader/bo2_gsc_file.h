@@ -118,7 +118,6 @@ typedef struct _gscFunction
 #define FLAG_4	4
 #define FLAG_5	5
 
-// IMPORTANT: I MUST WRITE AN EXTERNAL RESOLVER SO I CAN READ NUMBER OF PARAMETERS FROM THE CALL
 // functions imported by the gsc (not the functions in the gsc)
 typedef struct _externalFunction
 {

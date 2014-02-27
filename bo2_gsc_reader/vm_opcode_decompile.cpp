@@ -510,7 +510,7 @@ DEF_DECOMPILE(GetSelf)
 	WriteRegisterInfo(currentPos - 1);
 	}
 	
-	char* Self = MallocAndSprintf("%s", "self"); // malloc because we free the string every time when poping if the type is type_decompiled_string
+	char* Self = MallocAndSprintf("%s", "self");
 
 	StackPush<char*>(Self, type_decompiled_string);
 
@@ -601,11 +601,13 @@ DEF_DECOMPILE(GetGameRef)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
+	sprintf_s(VariableNameBuffer, "%s", "game");
+
 	opcodesPtr = currentPos;
 }
 
 // 0x15
-DEF_DECOMPILE(GetFunction) // is this a string? need to check...
+DEF_DECOMPILE(GetFunction)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
@@ -2281,7 +2283,26 @@ DEF_DECOMPILE(skipdev)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	currentPos = GET_ALIGNED_WORD(currentPos) + 2;
+	if (*(__int16*)(GET_ALIGNED_WORD(currentPos)) < 0)
+	{
+		cout << "Error: negative jump not expected in OP_skipdev" << endl;
+		cin.get();
+		ExitProcess(-1);
+	}
+
+	DecompilerOut("/#\n", false);
+	GSCDecompilerClass gscDecompiler;
+	decompiledBuffer.append((char*)gscDecompiler.decompile(
+		&this->stack,
+		gscBuffer,
+		(DWORD)GET_ALIGNED_WORD(currentPos) + 2 - gscBuffer,
+		*(__int16*)(GET_ALIGNED_WORD(currentPos)),
+		false,
+		curTabLevel).c_str()
+		);
+	DecompilerOut("#/\n", false);
+
+	currentPos = GET_ALIGNED_WORD(currentPos) + *(__int16*)(GET_ALIGNED_WORD(currentPos)) + 2;
 
 	opcodesPtr = currentPos;
 }
