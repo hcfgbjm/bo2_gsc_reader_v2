@@ -60,6 +60,8 @@ void AddString(char* format, bool addTabLevel, ...)
 			decompiledFile << "\t";
 	}
 
+	//cout << allocatedString << endl;
+
 	decompiledFile << allocatedString;
 
 	free(allocatedString);
@@ -333,7 +335,14 @@ void DecompileGSC()
 	gscFunction* currentFunction = (gscFunction*)(gscBuffer + gsc->gscFunctions);
 	for (WORD i = 0; i < gsc->numOfFunctions; i++)
 	{
-		InterpretFunction((DWORD)gscBuffer, currentFunction); 
+		InterpretFunction((DWORD)gscBuffer, currentFunction);
+
+		// memory leak detection
+		OutputDebugStringA("\n\nMemory leak dump after decompiling function \"");
+		OutputDebugStringA((char*)(gscBuffer + currentFunction->name));
+		OutputDebugStringA("\":\n");
+		_CrtDumpMemoryLeaks();
+
 		if (i + 1 != gsc->numOfFunctions) // check if it's not the last the loop and add 2 newlines
 			AddString("\n\n", false);
 		currentFunction++;
@@ -405,9 +414,9 @@ int wmain(int argc, wchar_t *argv[])
 	decompiledFile.open(szOutFileName);
 
 	// load the gsc (external functions resolving, includes, etc...)
-	//LoadGSC();
+	//LoadGSC(); // delete this later
 
-	DumpGSCHeader((_COD9_GSC *)gscBuffer);
+	DumpGSCHeader((COD9_GSC*)gscBuffer);
 
 	// decompile the gsc
 	DecompileGSC();

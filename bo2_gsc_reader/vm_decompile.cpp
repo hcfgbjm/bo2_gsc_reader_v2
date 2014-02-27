@@ -1,10 +1,6 @@
 #include "stdafx.h"
 
-ObjectType CurrentObject;
-char* CastedObject;
-char VariableNameBuffer[256];
-
-char* GetStringForCurrentObject()
+char* GSCDecompilerClass::GetStringForCurrentObject()
 {
 	switch (CurrentObject)
 	{
@@ -21,20 +17,7 @@ char* GetStringForCurrentObject()
 	return nullptr;
 }
 
-DWORD IfJumpEndStack[256]; // erase this, make something like, wait till result for jump is poped
-DWORD* IfJumpEndStackPos = IfJumpEndStack - 4;
-
-void CheckIfJumps(BYTE* opcodesPtr)
-{
-	if (*IfJumpEndStackPos == (DWORD)opcodesPtr)
-	{
-		DecTabLevel();
-		AddString("}\n", true);
-		IfJumpEndStackPos--;
-	}
-}
-
-void jump_expression_decompile(BYTE jumpOP, DWORD jumpTo)
+/*void GSCDecompilerClass::jump_expression_decompile(BYTE jumpOP, DWORD jumpTo)
 {
 	bool includeNegation; // put a ! before the condition if true, for example, if ( !(IsDefined ( ... )) )
 
@@ -71,41 +54,12 @@ void jump_expression_decompile(BYTE jumpOP, DWORD jumpTo)
 	AddString("{\n", true);
 
 	IncTabLevel();
-}
-
-// special call decompilation for waittill & waittillmatch
-void waittill_call_decompile(char* functionName, BYTE* currentPos)
-{
-	string _FunctionString;
-	
-	// append the method object
-	_FunctionString.append((char*)StackGetLastValue());
-	_FunctionString.append(" ");
-	
-	StackPop(); // pop the method object (like self, etc...) from the stack
-
-	// write the function name and write all the parameters
-	_FunctionString.append(functionName);
-	_FunctionString.append("( ");
-	_FunctionString.append((char*)StackGetLastValue());
-
-	StackPop(); // pop the single waittill parameter
-
-	for (BYTE* i = currentPos; *i == OP_SafeSetWaittillVariableFieldCached; i += 2) // += 2 because 1 is opcode size and 1 is the local var index
-	{
-		_FunctionString.append(", ");
-		_FunctionString.append(StackLocalGetValue(*(i + 1)));
-	}
-
-	_FunctionString.append(" );\n");
-
-	AddString((char*)_FunctionString.c_str(), true);
-}
+}*/
 
 // ip = RELATIVE instruction pointer that points to the call opcode (for example 0x2E, which is OP_ScriptFunctionCall)
 // if we find out that the call is external (by searching through externalFunctions from the gsc header), we prepend
 // the right gscOfFunction to functionName
-char* funcname_prepend_gscOfFunction(DWORD gscBuffer, char* functionName, DWORD ip)
+char* GSCDecompilerClass::funcname_prepend_gscOfFunction(char* functionName, DWORD ip)
 {
 	COD9_GSC* gsc = (COD9_GSC*)gscBuffer;
 
@@ -136,8 +90,37 @@ char* funcname_prepend_gscOfFunction(DWORD gscBuffer, char* functionName, DWORD 
 	return result;
 }
 
+// special call decompilation for waittill & waittillmatch
+void GSCDecompilerClass::waittill_call_decompile(char* functionName, BYTE* currentPos)
+{
+	string _FunctionString;
+	
+	// append the method object
+	_FunctionString.append((char*)StackGetLastValue());
+	_FunctionString.append(" ");
+	
+	StackPop(); // pop the method object (like self, etc...) from the stack
+
+	// write the function name and write all the parameters
+	_FunctionString.append(functionName);
+	_FunctionString.append("( ");
+	_FunctionString.append((char*)StackGetLastValue());
+
+	StackPop(); // pop the single waittill parameter
+
+	for (BYTE* i = currentPos; *i == OP_SafeSetWaittillVariableFieldCached; i += 2) // += 2 because 1 is opcode size and 1 is the local var index
+	{
+		_FunctionString.append(", ");
+		_FunctionString.append(StackLocalGetValue(*(i + 1)));
+	}
+
+	_FunctionString.append(" );\n");
+
+	DecompilerOut((char*)_FunctionString.c_str(), true);
+}
+
 // if hasPrecodepos is true, it ignores _numOfParameters
-void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused)
+void GSCDecompilerClass::call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused)
 {
 	DWORD numOfParameters = 0;
 
@@ -206,10 +189,106 @@ void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParamete
 
 	// resultUnused is true if there's a OP_DecTop after the function call, which means that it pops the result instantly
 	if (resultUnused)
-		AddString("%s;\n", true, FunctionString);
+		DecompilerOut("%s;\n", true, FunctionString);
 }
 
-int GetOperatorPrecedenceLevel(OperatorType operatorType)
+BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
+{
+	currentPos = GET_ALIGNED_DWORD(*(DWORD*)GET_ALIGNED_DWORD(currentPos) + GET_ALIGNED_DWORD(currentPos) + 4);
+
+	DWORD caseCount = *(DWORD*)currentPos;
+
+	currentPos += 4;
+
+	BYTE* switchEndIP = GET_ALIGNED_DWORD(currentPos) + 8 * caseCount;
+
+	if (!caseCount)
+	{
+		StackPop();
+		return switchEndIP;
+	}
+
+	DecompilerOut("switch ( %s )\n", true, StackGetLastValue());
+	DecompilerOut("{\n", true);
+	IncTabLevel();
+
+	__int32 ipOffset = 0;
+	for (DWORD i = 0; i < caseCount; i++)
+	{
+		// Case name/value
+		BYTE* label = GET_ALIGNED_DWORD(currentPos);
+		DWORD caseLabelOffset = *(DWORD*)label;
+
+		// Case code pointer
+		BYTE* ip = GET_ALIGNED_DWORD(label + 4);
+		ipOffset = *(DWORD*)ip;
+
+		currentPos = ip + 4;
+
+		// currentPos + ipOffset here = code ip for this case
+		if (i + 1 == caseCount && !caseLabelOffset) // if it's last iteration and caseLabelOffset is 0 ( = default case)
+			DecompilerOut("default:\n", true);
+		else
+			DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelOffset));
+
+		DWORD curCaseIP = (DWORD)(currentPos + ipOffset - gscBuffer); // relative instruction pointer for current case
+		DWORD nextCaseIP = i + 1 == caseCount ? 0 : (DWORD)(currentPos + 8) + (*(DWORD*)GET_ALIGNED_DWORD(GET_ALIGNED_DWORD(currentPos) + 4)) - gscBuffer; // relative instruction pointer for next case
+
+		// only decompile the code of the case if only one case is left or if the current case differs from the next one
+		if (!nextCaseIP || curCaseIP != nextCaseIP)
+		{
+			// find the case's size of code and detect if it has a break at the end
+			DWORD caseCodeSize = 0;
+			bool caseHasBreak = false;
+
+			// read opcodes until we find OP_jump that jumps at the end of the switch (break) or until we hit the next case's IP (no break)
+			for (BYTE* curCasePos = (BYTE*)gscBuffer + curCaseIP; ; caseCodeSize += gsclde(curCasePos), curCasePos += gsclde(curCasePos))
+			{
+				// if it's a jump, we check if it jumps at the end of the switch, if yes, then we read all the opcodes of the case and there's a break in the end
+				// if it's an endswitch, then we can put or not a break, but i prefer to put it
+				// if there is a next case and we reach it, we don't put a break
+				if (*curCasePos == OP_jump && (GET_ALIGNED_WORD(curCasePos + 1) + *(__int16*)(GET_ALIGNED_WORD(curCasePos + 1)) + 2) == switchEndIP)
+				{
+					caseHasBreak = true;
+					break;
+				}
+				else if (*curCasePos == OP_endswitch)
+				{
+					caseHasBreak = true;
+					break;
+				}
+				else if (nextCaseIP && curCasePos == (BYTE*)(gscBuffer + nextCaseIP))
+				{
+					caseHasBreak = false;
+					break;
+				}
+			}
+
+			if (caseCodeSize)
+			{
+				IncTabLevel();
+
+				GSCDecompilerClass* gscDecompiler = new GSCDecompilerClass();
+				DecompilerOut((char*)(gscDecompiler->decompile(&this->stack, gscBuffer, curCaseIP, caseCodeSize, false, curTabLevel)).c_str(), false);
+				delete gscDecompiler;
+
+				if (caseHasBreak)
+					DecompilerOut("break;\n", true);
+
+				DecTabLevel();
+			}
+		}
+	}
+
+	StackPop();
+
+	DecTabLevel();
+	DecompilerOut("}\n", true);
+
+	return switchEndIP;
+}
+
+int GSCDecompilerClass::GetOperatorPrecedenceLevel(OperatorType operatorType)
 {
 	switch (operatorType)
 	{
@@ -260,7 +339,7 @@ int GetOperatorPrecedenceLevel(OperatorType operatorType)
 	};
 }
 
-char* GetStringForOperator(OperatorType operatorType)
+char* GSCDecompilerClass::GetStringForOperator(OperatorType operatorType)
 {
 	switch (operatorType)
 	{
@@ -273,7 +352,7 @@ char* GetStringForOperator(OperatorType operatorType)
 	case OP_DIVIDE:
 		return " / ";
 	case OP_MOD:
-		return " %% "; // double modulus or AddString will crash
+		return " %% "; // double modulus or DecompilerOut will crash
 	case OP_PLUS:
 		return " + ";
 	case OP_MINUS:
@@ -320,7 +399,7 @@ char* GetStringForOperator(OperatorType operatorType)
 // by operator precedence, the first execution (2nd operator) doesn't need parenthesis because * > +
 // however, the 1st operation needs parenthesis, otherwise it would do 0.5 * 10, and that's not what we want
 // so in the end, what we get is: (3 + ranklevel * 0.5) * 10
-void build_operation(int index)
+void GSCDecompilerClass::build_operation(int index)
 {
 	OperatorsInfo* operatorsInfo = StackGetOperatorsInfo(index);
 
@@ -454,10 +533,11 @@ void build_operation(int index)
 	cout << endl;
 	cin.get();*/
 
-	// best part now, we create the operation string now (there's 1 operator left only)
+	// best part now, we create the operation string (there's 1 operator left only)
 	char* OperationString;
 	OperationString = MallocAndSprintf("%s%s%s", newOperatorsInfo->operandList[0], GetStringForOperator(newOperatorsInfo->operatorList[0]), newOperatorsInfo->operandList[1]);
 
+	// no need to check if value is allocated because StackGetValue does that for us already
 	(stack.currentVar - index)->value = (DWORD)OperationString;
 
 	// free the stuff we've malloc'd
@@ -476,7 +556,7 @@ void build_operation(int index)
 }
 
 // can test with wait_for_buffer_time_to_pass from _utility.gsc
-void operator_decompile(OperatorType operatorType)
+void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 {
 	if (StackGetValueType(1) != type_decompiled_string && StackGetValueType(1) != type_buildable_operation)
 	{
@@ -625,7 +705,7 @@ void operator_decompile(OperatorType operatorType)
 	StackSetOperatorsInfo(operatorsInfo);
 }
 
-void WriteRegisterInfo(BYTE* gscBuffer, BYTE* ip)
+void GSCDecompilerClass::WriteRegisterInfo(BYTE* ip)
 {
-	AddString(" IP = 0x%X ; SP = 0x%X\n", false, ip - gscBuffer, StackGetRelativePos());
+	DecompilerOut(" IP = 0x%X ; SP = 0x%X\n", false, ip - gscBuffer, StackGetRelativePos());
 }

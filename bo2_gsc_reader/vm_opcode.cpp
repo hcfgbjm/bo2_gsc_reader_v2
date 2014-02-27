@@ -17,12 +17,12 @@ void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 
 		if (*(BYTE*)(gscBuffer + gscFunc->start) != OP_CreateLocalVariables)
 		{
-			AddString("/* Error: Parameter decompilation failed (first opcode isn't OP_CreateLocalVariable) */", false);
+			AddString("/* Error: Parameter decompilation failed (first opcode isn't OP_CreateLocalVariables) */", false);
 			goto end_param_decompilation;
 		}
 		else if (*(BYTE*)(gscBuffer + gscFunc->start + 1) < gscFunc->numOfParameters)
 		{
-			AddString("/* Error: Parameter decompilation failed (not enough variables in OP_CreateLocalVariable) */", false);
+			AddString("/* Error: Parameter decompilation failed (not enough variables in OP_CreateLocalVariables) */", false);
 			goto end_param_decompilation;
 		}
 
@@ -38,381 +38,188 @@ void InterpretFunction(DWORD gscBuffer, gscFunction *gscFunc)
 	}
 end_param_decompilation:
 
-	// init stack
-	InitStacks();
-
 	AddString(")\n{\n", false);
 
-	ResetTabLevel();
-	IncTabLevel();
-
-	// decompile function opcodes
-	InterpretGSCOpCodes(gscBuffer, gscFunc);
-
-	DecTabLevel();
-
-	AddString("} // ", false);
-	if (StackGetRelativePos() == 0x0)
-		AddString("SP = 0x%X - check OK", false, StackGetRelativePos());
-	else
-		AddString("SP = 0x%X - check failed (function may have been decompiled incorrectly)", false, StackGetRelativePos());
-}
-
-// the goal is to make the gsc decompiling look like the original ones from bo1
-void InterpretGSCOpCodes(DWORD gscBuffer, gscFunction* gscFunc)
-{
-	BYTE* opcodesPtr = (BYTE*)(gscBuffer + gscFunc->start);
+	// we can "bruteforce" the size of the function by crc32ing byte by byte until we hit the function's crc32 (which means that the function has ended)
+	DWORD gscFuncSize = 0;
 
 	Crc32 crc32;
-	Crc32 crc32_2; // only used in OP_End
+	crc32.Reset();
 
-	BYTE* oldOpcodesPtr = 0;
+	for (DWORD i = 0; crc32.GetCrc32() != gscFunc->crc32; gscFuncSize++, i++)
+		crc32.AddData((BYTE*)(gscBuffer + gscFunc->start + i), 1);
 
-	while (true)
+	GSCDecompilerClass gscDecompiler;
+
+	// decompile function opcodes
+	string decompiledCode = gscDecompiler.decompile(NULL, gscBuffer, gscFunc->start, gscFuncSize, true, 1);
+
+	//cout << decompiledCode.c_str() << endl;
+
+	AddString((char*)decompiledCode.c_str(), false);
+
+	AddString("\n}", false);
+}
+
+// gsc opcode length disassembler (takes pointer to opcode as parameter, returns size of the entire instruction (opcode counts too))
+DWORD gsclde(BYTE* opcodesPtr)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+
+	// variables used inside the switch
+	BYTE numOfVariables = 0;
+	DWORD caseCount = 0;
+
+	switch (*opcodesPtr)
 	{
-		oldOpcodesPtr = opcodesPtr;
+	case OP_End:
+	case OP_Return:
+	case OP_GetUndefined:
+	case OP_GetZero:
+	case OP_GetLevelObject:
+	case OP_GetAnimObject:
+	case OP_GetSelf:
+	case OP_GetLevel:
+	case OP_GetGame:
+	case OP_GetAnim:
+	case OP_GetGameRef: // ADD DECOMPILATION SUPPORT FOR THIS (WTFFFF)
+	case OP_RemoveLocalVariables: // ADD SUPPORT FOR THIS TOO
+	case OP_EvalLocalVariableCached:
+	case OP_EvalArray:
+	case OP_EvalArrayRef:
+	case OP_ClearArray:
+	case OP_EmptyArray:
+	case OP_GetSelfObject:
+	case OP_clearparams: // ADD SUPPORT FOR THIS TOO
+	case OP_checkclearparams:
+	case OP_SetVariableField:
+	case OP_wait:
+	case OP_waittillFrameEnd:
+	case OP_PreScriptCall:
+	case OP_DecTop:
+	case OP_CastFieldObject:
+	case OP_CastBool: // ADD SUPPORT FOR THIS TOO? hmm...
+	case OP_BoolNot:
+	case OP_BoolComplement: // ADD SUPPORT FOR THIS TOO
+	case OP_inc:
+	case OP_dec:
+	case OP_bit_or:
+	case OP_bit_ex_or:
+	case OP_bit_and:
+	case OP_equality:
+	case OP_inequality:
+	case OP_less:
+	case OP_greater:
+	case OP_less_equal:
+	case OP_greater_equal:
+	case OP_shift_left:
+	case OP_shift_right:
+	case OP_plus:
+	case OP_minus:
+	case OP_multiply:
+	case OP_divide:
+	case OP_mod:
+	case OP_size:
+	case OP_waittillmatch:
+	case OP_waittill:
+	case OP_notify:
+	case OP_endon:
+	case OP_voidCodepos:
+	case OP_vector:
+	case OP_isdefined:
+	case OP_vectorscale:
+	case OP_anglestoup:
+	case OP_anglestoright:
+	case OP_anglestoforward:
+	case OP_angleclamp180:
+	case OP_vectorstoangle:
+	case OP_abs:
+	case OP_gettime:
+	case OP_getdvar:
+	case OP_getdvarint:
+	case OP_getdvarfloat:
+	case OP_getdvarvector:
+	case OP_getdvarcolorred:
+	case OP_getdvarcolorgreen:
+	case OP_getdvarcolorblue:
+	case OP_getdvarcoloralpha:
+	case OP_GetFirstArrayKey:
+	case OP_GetNextArrayKey:
+	case OP_GetUndefined2:
+	case OP_Unknown74: // ADD SUPPORT FOR THIS TOO
+	case OP_NOP: // ADD SUPPORT FOR THIS TOO (LOL)
+	case OP_abort: // ADD SUPPORT FOR THIS TOO (in cod4, this decreases g_script_error_level, and seems to do the same in bo2)
+		return 1;
+	case OP_GetByte:
+	case OP_GetNegByte:
+	case OP_EvalLocalArrayRefCached: // ADD SUPPORT FOR THIS TOO
+	case OP_SafeSetVariableFieldCached: // ADD SUPPORT FOR THIS TOO
+	case OP_SafeSetWaittillVariableFieldCached:
+	case OP_EvalLocalVariableRefCached:
+	case OP_ScriptFunctionCallPointer:
+	case OP_ScriptMethodCallPointer:
+	case OP_ScriptThreadCallPointer:
+	case OP_ScriptMethodThreadCallPointer:
+	case OP_GetSimpleVector:
+		return 2;
+	case OP_GetUnsignedShort:
+	case OP_GetNegUnsignedShort:
+	case OP_GetString:
+	case OP_GetIString:
+	case OP_CreateLocalVariable: // ADD SUPPORT FOR THIS TOO
+	case OP_EvalFieldVariable:
+	case OP_EvalFieldVariableRef:
+	case OP_ClearFieldVariable:
+	case OP_JumpOnFalse:
+	case OP_JumpOnTrue:
+	case OP_JumpOnFalseExpr:
+	case OP_JumpOnTrueExpr:
+	case OP_jump:
+	case OP_thread_object: // ADD SUPPORT FOR THIS TOO (pushes a type_object var to the stack like OP_object, but differently)
+	case OP_EvalLocalVariable: // ADD SUPPORT FOR THIS TOO
+	case OP_EvalLocalVariableRef: // ADD SUPPORT FOR THIS TOO
+	case OP_skipdev: // ADD SUPPORT FOR THIS TOO
+		currentPos = GET_ALIGNED_WORD(currentPos) + 2;
+		return currentPos - opcodesPtr;
+	case OP_GetInteger:
+	case OP_GetFloat:
+	case OP_GetAnimation:
+	case OP_GetFunction:
+	case OP_switch: // we don't skip the cases' code here
+	case OP_GetHash:
+	case OP_weird3: // ADD SUPPORT FOR THIS ONE TOO (what it does is the same as OP_GetUndefined, but changes currentPos too)
+		currentPos = GET_ALIGNED_DWORD(currentPos) + 4;
+		return currentPos - opcodesPtr;
+	case OP_GetVector:
+		currentPos = GET_ALIGNED_DWORD(currentPos) + 12;
+		return currentPos - opcodesPtr;
+	case OP_CreateLocalVariables:
+		numOfVariables = *(BYTE*)(currentPos);
+		currentPos += 1;
+		for (BYTE i = 0; i < numOfVariables; i++)
+			currentPos = GET_ALIGNED_WORD(currentPos) + 2;
+		return currentPos - opcodesPtr;
+	//case OP_CallBuiltin: // idk how to add support for these two, i think it's only generated by the external function resolver anyway
+	//case OP_CallBuiltinMethod:
+	case OP_ScriptFunctionCall:
+	case OP_ScriptMethodCall:
+	case OP_ScriptThreadCall:
+	case OP_ScriptMethodThreadCall:
+		currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
+		return currentPos - opcodesPtr;
+	//case OP_jumpback: // i don't think this opcode is even supported by the VM?
+	case OP_endswitch:
+		caseCount = *(DWORD*)GET_ALIGNED_DWORD(currentPos);
+		currentPos = GET_ALIGNED_DWORD(GET_ALIGNED_DWORD(currentPos) + 4) + 8 * caseCount;
+		return currentPos - opcodesPtr;
 
-		CheckIfJumps(opcodesPtr);
+	// 0x5D not supported
 
-		switch (*opcodesPtr)
-		{
-		case OP_End:
-			crc32_2.AddData((BYTE*)(gscBuffer + gscFunc->start), (DWORD)opcodesPtr - gscBuffer - gscFunc->start + 1); // + 1 = size of OP_End
-			opcodesPtr = OP_End_Decompile(gscBuffer, opcodesPtr, crc32_2.GetCrc32() == gscFunc->crc32);
-			crc32_2.Reset();
-			break;
-		case OP_Return:
-			opcodesPtr = OP_Return_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetUndefined:
-			opcodesPtr = OP_GetUndefined_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetZero:
-			opcodesPtr = OP_GetZero_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetByte:
-			opcodesPtr = OP_GetByte_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetNegByte:
-			opcodesPtr = OP_GetNegByte_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetUnsignedShort:
-			opcodesPtr = OP_GetUnsignedShort_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetNegUnsignedShort:
-			opcodesPtr = OP_GetNegUnsignedShort_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetInteger:
-			opcodesPtr = OP_GetInteger_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetFloat:
-			opcodesPtr = OP_GetFloat_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetString:
-			opcodesPtr = OP_GetString_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetIString:
-			opcodesPtr = OP_GetIString_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetVector:
-			opcodesPtr = OP_GetVector_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetLevelObject:
-			opcodesPtr = OP_GetLevelObject_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetAnimObject:
-			opcodesPtr = OP_GetAnimObject_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetSelf:
-			opcodesPtr = OP_GetSelf_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetLevel:
-			opcodesPtr = OP_GetLevel_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetGame:
-			opcodesPtr = OP_GetGame_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetAnim:
-			opcodesPtr = OP_GetAnim_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetAnimation:
-			opcodesPtr = OP_GetAnimation_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetGameRef:
-			opcodesPtr = OP_GetGameRef_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetFunction:
-			opcodesPtr = OP_GetFunction_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_CreateLocalVariable:
-			opcodesPtr = OP_CreateLocalVariable_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_CreateLocalVariables:
-			opcodesPtr = OP_CreateLocalVariables_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalLocalVariableCached:
-			opcodesPtr = OP_EvalLocalVariableCached_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalArray:
-			opcodesPtr = OP_EvalArray_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalArrayRef:
-			opcodesPtr = OP_EvalArrayRef_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ClearArray:
-			opcodesPtr = OP_ClearArray_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EmptyArray:
-			opcodesPtr = OP_EmptyArray_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetSelfObject:
-			opcodesPtr = OP_GetSelfObject_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalFieldVariable:
-			opcodesPtr = OP_EvalFieldVariable_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalFieldVariableRef:
-			opcodesPtr = OP_EvalFieldVariableRef_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ClearFieldVariable:
-			opcodesPtr = OP_ClearFieldVariable_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_SafeSetWaittillVariableFieldCached:
-			opcodesPtr = OP_SafeSetWaittillVariableFieldCached_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_clearparams:
-			opcodesPtr = OP_clearparams_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_checkclearparams:
-			opcodesPtr = OP_checkclearparams_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_EvalLocalVariableRefCached:
-			opcodesPtr = OP_EvalLocalVariableRefCached_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_SetVariableField:
-			opcodesPtr = OP_SetVariableField_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_wait:
-			opcodesPtr = OP_wait_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_waittillFrameEnd:
-			opcodesPtr = OP_waittillFrameEnd_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_PreScriptCall:
-			opcodesPtr = OP_PreScriptCall_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptFunctionCall:
-			opcodesPtr = OP_ScriptFunctionCall_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptFunctionCallPointer:
-			opcodesPtr = OP_ScriptFunctionCallPointer_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptMethodCall:
-			opcodesPtr = OP_ScriptMethodCall_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptMethodCallPointer:
-			opcodesPtr = OP_ScriptMethodCallPointer_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptThreadCall:
-			opcodesPtr = OP_ScriptThreadCall_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptThreadCallPointer:
-			opcodesPtr = OP_ScriptThreadCallPointer_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptMethodThreadCall:
-			opcodesPtr = OP_ScriptMethodThreadCall_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_ScriptMethodThreadCallPointer:
-			opcodesPtr = OP_ScriptMethodThreadCallPointer_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_DecTop:
-			opcodesPtr = OP_DecTop_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_CastFieldObject:
-			opcodesPtr = OP_CastFieldObject_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_CastBool:
-			opcodesPtr = OP_CastBool_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_BoolNot:
-			opcodesPtr = OP_BoolNot_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_BoolComplement:
-			opcodesPtr = OP_BoolComplement_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_JumpOnFalse:
-			opcodesPtr = OP_JumpOnFalse_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_JumpOnTrue:
-			opcodesPtr = OP_JumpOnTrue_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_JumpOnFalseExpr:
-			opcodesPtr = OP_JumpOnFalseExpr_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_JumpOnTrueExpr:
-			opcodesPtr = OP_JumpOnTrueExpr_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_jump:
-			opcodesPtr = OP_jump_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_inc:
-			opcodesPtr = OP_inc_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_dec:
-			opcodesPtr = OP_dec_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_bit_or:
-			opcodesPtr = OP_bit_or_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_bit_ex_or:
-			opcodesPtr = OP_bit_ex_or_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_bit_and:
-			opcodesPtr = OP_bit_and_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_equality:
-			opcodesPtr = OP_equality_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_inequality:
-			opcodesPtr = OP_inequality_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_less:
-			opcodesPtr = OP_less_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_greater:
-			opcodesPtr = OP_greater_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_less_equal:
-			opcodesPtr = OP_less_equal_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_greater_equal:
-			opcodesPtr = OP_greater_equal_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_shift_left:
-			opcodesPtr = OP_shift_left_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_shift_right:
-			opcodesPtr = OP_shift_right_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_plus:
-			opcodesPtr = OP_plus_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_minus:
-			opcodesPtr = OP_minus_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_multiply:
-			opcodesPtr = OP_multiply_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_divide:
-			opcodesPtr = OP_divide_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_mod:
-			opcodesPtr = OP_mod_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_size:
-			opcodesPtr = OP_size_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_waittillmatch:
-			opcodesPtr = OP_waittillmatch_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_waittill:
-			opcodesPtr = OP_waittill_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_notify:
-			opcodesPtr = OP_notify_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_endon:
-			opcodesPtr = OP_endon_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_voidCodepos:
-			opcodesPtr = OP_voidCodepos_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_switch:
-			opcodesPtr = OP_switch_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_endswitch:
-			opcodesPtr = OP_endswitch_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_vector:
-			opcodesPtr = OP_vector_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetHash:
-			opcodesPtr = OP_GetHash_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetSimpleVector:
-			opcodesPtr = OP_GetSimpleVector_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_isdefined:
-			opcodesPtr = OP_isdefined_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_vectorscale:
-			opcodesPtr = OP_vectorscale_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_anglestoup:
-			opcodesPtr = OP_anglestoup_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_anglestoright:
-			opcodesPtr = OP_anglestoright_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_anglestoforward:
-			opcodesPtr = OP_anglestoforward_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_angleclamp180:
-			opcodesPtr = OP_angleclamp180_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_vectorstoangle:
-			opcodesPtr = OP_vectorstoangle_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_abs:
-			opcodesPtr = OP_abs_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_gettime:
-			opcodesPtr = OP_gettime_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvar:
-			opcodesPtr = OP_getdvar_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarint:
-			opcodesPtr = OP_getdvarint_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarfloat:
-			opcodesPtr = OP_getdvarfloat_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarvector:
-			opcodesPtr = OP_getdvarvector_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarcolorred:
-			opcodesPtr = OP_getdvarcolorred_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarcolorgreen:
-			opcodesPtr = OP_getdvarcolorgreen_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarcolorblue:
-			opcodesPtr = OP_getdvarcolorblue_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_getdvarcoloralpha:
-			opcodesPtr = OP_getdvarcoloralpha_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetFirstArrayKey:
-			opcodesPtr = OP_GetFirstArrayKey_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetNextArrayKey:
-			opcodesPtr = OP_GetNextArrayKey_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_GetUndefined2:
-			opcodesPtr = OP_GetUndefined2_Decompile(gscBuffer, opcodesPtr);
-			break;
-		case OP_skipdev:
-			opcodesPtr = OP_skipdev_Decompile(gscBuffer, opcodesPtr);
-			break;
-		default:
-			AddString("\t/* Error: unknown opcode (0x%X) */\n", true, *opcodesPtr);
-			return;
-		}
-
-		crc32.AddData(oldOpcodesPtr, opcodesPtr - oldOpcodesPtr);
-
-		if (crc32.GetCrc32() == gscFunc->crc32) // stop decompiling if its the function's end
-			break;
+	case OP_object: // ADD SUPPORT FOR THIS TOO (what i know is that it pushes a type_object var to the stack)
+		currentPos = GET_ALIGNED_DWORD(GET_ALIGNED_DWORD(currentPos) + 4) + 4;
+		return currentPos - opcodesPtr;
 	}
+
+	return 0;
 }

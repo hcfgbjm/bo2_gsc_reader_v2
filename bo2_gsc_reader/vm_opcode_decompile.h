@@ -1,328 +1,255 @@
-#include "stdafx.h"
-
-// 0x0
-BYTE* OP_End_Decompile(DWORD gscBuffer, BYTE* opcodesPtr, bool functionEnd);
-
-// 0x1
-BYTE* OP_Return_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2
-BYTE* OP_GetUndefined_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3
-BYTE* OP_GetZero_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4
-BYTE* OP_GetByte_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x5
-BYTE* OP_GetNegByte_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6
-BYTE* OP_GetUnsignedShort_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x7
-BYTE* OP_GetNegUnsignedShort_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x8
-BYTE* OP_GetInteger_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x9
-BYTE* OP_GetFloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xA
-BYTE* OP_GetString_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xB
-BYTE* OP_GetIString_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xC
-BYTE* OP_GetVector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xD
-BYTE* OP_GetLevelObject_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xE
-BYTE* OP_GetAnimObject_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0xF
-BYTE* OP_GetSelf_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x10
-BYTE* OP_GetLevel_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x11
-BYTE* OP_GetGame_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x12
-BYTE* OP_GetAnim_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x13
-BYTE* OP_GetAnimation_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x14
-BYTE* OP_GetGameRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x15
-BYTE* OP_GetFunction_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x16
-BYTE* OP_CreateLocalVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x17
-BYTE* OP_CreateLocalVariables_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x19
-BYTE* OP_EvalLocalVariableCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x1A
-BYTE* OP_EvalArray_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x1C
-BYTE* OP_EvalArrayRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x1D
-BYTE* OP_ClearArray_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x1E
-BYTE* OP_EmptyArray_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x1F
-BYTE* OP_GetSelfObject_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x20
-BYTE* OP_EvalFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x21
-BYTE* OP_EvalFieldVariableRef_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x22
-BYTE* OP_ClearFieldVariable_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x24
-BYTE* OP_SafeSetWaittillVariableFieldCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x25
-BYTE* OP_clearparams_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x26
-BYTE* OP_checkclearparams_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x27
-BYTE* OP_EvalLocalVariableRefCached_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x28
-BYTE* OP_SetVariableField_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2B
-BYTE* OP_wait_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2C
-BYTE* OP_waittillFrameEnd_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2D
-BYTE* OP_PreScriptCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2E
-BYTE* OP_ScriptFunctionCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x2F
-BYTE* OP_ScriptFunctionCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x30
-BYTE* OP_ScriptMethodCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x31
-BYTE* OP_ScriptMethodCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x32
-BYTE* OP_ScriptThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x33
-BYTE* OP_ScriptThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x34
-BYTE* OP_ScriptMethodThreadCall_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x35
-BYTE* OP_ScriptMethodThreadCallPointer_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x36
-BYTE* OP_DecTop_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x37
-BYTE* OP_CastFieldObject_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x38
-BYTE* OP_CastBool_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x39
-BYTE* OP_BoolNot_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3A
-BYTE* OP_BoolComplement_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3B
-BYTE* OP_JumpOnFalse_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3C
-BYTE* OP_JumpOnTrue_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3D
-BYTE* OP_JumpOnFalseExpr_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3E
-BYTE* OP_JumpOnTrueExpr_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x3F
-BYTE* OP_jump_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x41
-BYTE* OP_inc_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x42
-BYTE* OP_dec_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x43
-BYTE* OP_bit_or_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x44
-BYTE* OP_bit_ex_or_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x45
-BYTE* OP_bit_and_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x46
-BYTE* OP_equality_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x47
-BYTE* OP_inequality_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x48
-BYTE* OP_less_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x49
-BYTE* OP_greater_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4A
-BYTE* OP_less_equal_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4B
-BYTE* OP_greater_equal_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4C
-BYTE* OP_shift_left_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4D
-BYTE* OP_shift_right_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4E
-BYTE* OP_plus_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x4F
-BYTE* OP_minus_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x50
-BYTE* OP_multiply_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x51
-BYTE* OP_divide_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x52
-BYTE* OP_mod_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x53
-BYTE* OP_size_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x54
-BYTE* OP_waittillmatch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x55
-BYTE* OP_waittill_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x56
-BYTE* OP_notify_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x57
-BYTE* OP_endon_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x58
-BYTE* OP_voidCodepos_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x59
-BYTE* OP_switch_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x5A
-BYTE *OP_endswitch_Decompile(DWORD gscBuffer, BYTE *opcodesPtr);
-
-// 0x5B
-BYTE* OP_vector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x5C
-BYTE* OP_GetHash_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x5E
-BYTE* OP_GetSimpleVector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x5F
-BYTE* OP_isdefined_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x60
-BYTE* OP_vectorscale_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x61
-BYTE* OP_anglestoup_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x62
-BYTE* OP_anglestoright_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x63
-BYTE* OP_anglestoforward_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x64
-BYTE* OP_angleclamp180_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x65
-BYTE* OP_vectorstoangle_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x66
-BYTE* OP_abs_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x67
-BYTE* OP_gettime_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x68
-BYTE* OP_getdvar_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x69
-BYTE* OP_getdvarint_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6A
-BYTE* OP_getdvarfloat_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6B
-BYTE* OP_getdvarvector_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6C
-BYTE* OP_getdvarcolorred_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6D
-BYTE* OP_getdvarcolorgreen_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6E
-BYTE* OP_getdvarcolorblue_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x6F
-BYTE* OP_getdvarcoloralpha_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x70
-BYTE* OP_GetFirstArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x71
-BYTE* OP_GetNextArrayKey_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x73
-BYTE* OP_GetUndefined2_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
-
-// 0x7B
-BYTE* OP_skipdev_Decompile(DWORD gscBuffer, BYTE* opcodesPtr);
+#pragma once
+
+using namespace std;
+
+#define DECL_DECOMPILE(name) void OP_ ## name ## _Decompile()
+
+class GSCDecompilerClass
+{
+	// main variables & functions //
+	string decompiledBuffer;
+	void DecompilerOut(char* format, bool addTabLevel, ...);
+
+	DWORD curTabLevel;
+	void IncTabLevel()
+	{
+		curTabLevel++;
+	}
+
+	void DecTabLevel()
+	{
+		if (curTabLevel)
+			curTabLevel--;
+	}
+
+	void ResetTabLevel()
+	{
+		curTabLevel = 0;
+	}
+
+public:
+	string decompile(vmStack_s* initialStack, DWORD gscBuffer, DWORD start, DWORD size, bool isFunction, DWORD initialTabLevel);
+
+	// structs & variables needed for decompilation //
+	bool opcode_dec; // decompile into opcodes or gsc code?
+
+private:
+	// current opcode pointer that is being decompiled
+	BYTE* opcodesPtr;
+
+	// saved params from this->decompile
+	DWORD gscBuffer;
+	DWORD decompileStart;
+	DWORD decompileSize;
+	bool isFunction;
+
+	// the stack (normal stack & local variable stack)
+	vmStack_s stack;
+
+	// some vars needed for decompilation
+	ObjectType CurrentObject;
+	char* CastedObject;
+	
+	char VariableNameBuffer[256];
+
+	// decompiler helper functions //
+	char* GetStringForCurrentObject();
+
+	char* funcname_prepend_gscOfFunction(char* functionName, DWORD ip);
+	void waittill_call_decompile(char* functionName, BYTE* currentPos);
+	void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused);
+
+	BYTE* switch_decompile(BYTE* currentPos);
+
+	int GetOperatorPrecedenceLevel(OperatorType operatorType);
+	char* GetStringForOperator(OperatorType operatorType);
+	void build_operation(int index);
+	void operator_decompile(OperatorType operatorType);
+
+	void WriteRegisterInfo(BYTE* ip);
+
+	// opcode decompiling functions //
+	DECL_DECOMPILE(End);								// 0x00
+	DECL_DECOMPILE(Return);								// 0x01
+	DECL_DECOMPILE(GetUndefined);						// 0x02
+	DECL_DECOMPILE(GetZero);							// 0x03
+	DECL_DECOMPILE(GetByte);							// 0x04
+	DECL_DECOMPILE(GetNegByte);							// 0x05
+	DECL_DECOMPILE(GetUnsignedShort);					// 0x06
+	DECL_DECOMPILE(GetNegUnsignedShort);				// 0x07
+	DECL_DECOMPILE(GetInteger);							// 0x08
+	DECL_DECOMPILE(GetFloat);							// 0x09
+	DECL_DECOMPILE(GetString);							// 0x0A
+	DECL_DECOMPILE(GetIString);							// 0x0B
+	DECL_DECOMPILE(GetVector);							// 0x0C
+	DECL_DECOMPILE(GetLevelObject);						// 0x0D
+	DECL_DECOMPILE(GetAnimObject);						// 0x0E
+	DECL_DECOMPILE(GetSelf);							// 0x0F
+	DECL_DECOMPILE(GetLevel);							// 0x10
+	DECL_DECOMPILE(GetGame);							// 0x11
+	DECL_DECOMPILE(GetAnim);							// 0x12
+	DECL_DECOMPILE(GetAnimation);						// 0x13
+	DECL_DECOMPILE(GetGameRef);							// 0x14
+	DECL_DECOMPILE(GetFunction);						// 0x15
+	DECL_DECOMPILE(CreateLocalVariable);				// 0x16
+	DECL_DECOMPILE(CreateLocalVariables);				// 0x17
+	DECL_DECOMPILE(EvalLocalVariableCached);			// 0x19
+	DECL_DECOMPILE(EvalArray);							// 0x1A
+	DECL_DECOMPILE(EvalArrayRef);						// 0x1C
+	DECL_DECOMPILE(ClearArray);							// 0x1D
+	DECL_DECOMPILE(EmptyArray);							// 0x1E
+	DECL_DECOMPILE(GetSelfObject);						// 0x1F
+	DECL_DECOMPILE(EvalFieldVariable);					// 0x20
+	DECL_DECOMPILE(EvalFieldVariableRef);				// 0x21
+	DECL_DECOMPILE(ClearFieldVariable);					// 0x22
+	DECL_DECOMPILE(SafeSetWaittillVariableFieldCached);	// 0x24
+	DECL_DECOMPILE(clearparams);						// 0x25
+	DECL_DECOMPILE(checkclearparams);					// 0x26
+	DECL_DECOMPILE(EvalLocalVariableRefCached);			// 0x27
+	DECL_DECOMPILE(SetVariableField);					// 0x28
+	DECL_DECOMPILE(wait);								// 0x2B
+	DECL_DECOMPILE(waittillFrameEnd);					// 0x2C
+	DECL_DECOMPILE(PreScriptCall);						// 0x2D
+	DECL_DECOMPILE(ScriptFunctionCall);					// 0x2E
+	DECL_DECOMPILE(ScriptFunctionCallPointer);			// 0x2F
+	DECL_DECOMPILE(ScriptMethodCall);					// 0x30
+	DECL_DECOMPILE(ScriptMethodCallPointer);			// 0x31
+	DECL_DECOMPILE(ScriptThreadCall);					// 0x32
+	DECL_DECOMPILE(ScriptThreadCallPointer);			// 0x33
+	DECL_DECOMPILE(ScriptMethodThreadCall);				// 0x34
+	DECL_DECOMPILE(ScriptMethodThreadCallPointer);		// 0x35
+	DECL_DECOMPILE(DecTop);								// 0x36
+	DECL_DECOMPILE(CastFieldObject);					// 0x37
+	DECL_DECOMPILE(CastBool);							// 0x38
+	DECL_DECOMPILE(BoolNot);							// 0x39
+	DECL_DECOMPILE(BoolComplement);						// 0x3A
+	DECL_DECOMPILE(JumpOnFalse);						// 0x3B
+	DECL_DECOMPILE(JumpOnTrue);							// 0x3C
+	DECL_DECOMPILE(JumpOnFalseExpr);					// 0x3D
+	DECL_DECOMPILE(JumpOnTrueExpr);						// 0x3E
+	DECL_DECOMPILE(jump);								// 0x3F
+	DECL_DECOMPILE(inc);								// 0x41
+	DECL_DECOMPILE(dec);								// 0x42
+	DECL_DECOMPILE(bit_or);								// 0x43
+	DECL_DECOMPILE(bit_ex_or);							// 0x44
+	DECL_DECOMPILE(bit_and);							// 0x45
+	DECL_DECOMPILE(equality);							// 0x46
+	DECL_DECOMPILE(inequality);							// 0x47
+	DECL_DECOMPILE(less);								// 0x48
+	DECL_DECOMPILE(greater);							// 0x49
+	DECL_DECOMPILE(less_equal);							// 0x4A
+	DECL_DECOMPILE(greater_equal);						// 0x4B
+	DECL_DECOMPILE(shift_left);							// 0x4C
+	DECL_DECOMPILE(shift_right);						// 0x4D
+	DECL_DECOMPILE(plus);								// 0x4E
+	DECL_DECOMPILE(minus);								// 0x4F
+	DECL_DECOMPILE(multiply);							// 0x50
+	DECL_DECOMPILE(divide);								// 0x51
+	DECL_DECOMPILE(mod);								// 0x52
+	DECL_DECOMPILE(size);								// 0x53
+	DECL_DECOMPILE(waittillmatch);						// 0x54
+	DECL_DECOMPILE(waittill);							// 0x55
+	DECL_DECOMPILE(notify);								// 0x56
+	DECL_DECOMPILE(endon);								// 0x57
+	DECL_DECOMPILE(voidCodepos);						// 0x58
+	DECL_DECOMPILE(switch);								// 0x59
+	DECL_DECOMPILE(endswitch);							// 0x5A
+	DECL_DECOMPILE(vector);								// 0x5B
+	DECL_DECOMPILE(GetHash);							// 0x5C
+	DECL_DECOMPILE(GetSimpleVector);					// 0x5E
+	DECL_DECOMPILE(isdefined);							// 0x5F
+	DECL_DECOMPILE(vectorscale);						// 0x60
+	DECL_DECOMPILE(anglestoup);							// 0x61
+	DECL_DECOMPILE(anglestoright);						// 0x62
+	DECL_DECOMPILE(anglestoforward);					// 0x63
+	DECL_DECOMPILE(angleclamp180);						// 0x64
+	DECL_DECOMPILE(vectorstoangle);						// 0x65
+	DECL_DECOMPILE(abs);								// 0x66
+	DECL_DECOMPILE(gettime);							// 0x67
+	DECL_DECOMPILE(getdvar);							// 0x68
+	DECL_DECOMPILE(getdvarint);							// 0x69
+	DECL_DECOMPILE(getdvarfloat);						// 0x6A
+	DECL_DECOMPILE(getdvarvector);						// 0x6B
+	DECL_DECOMPILE(getdvarcolorred);					// 0x6C
+	DECL_DECOMPILE(getdvarcolorgreen);					// 0x6D
+	DECL_DECOMPILE(getdvarcolorblue);					// 0x6E
+	DECL_DECOMPILE(getdvarcoloralpha);					// 0x6F
+	DECL_DECOMPILE(GetFirstArrayKey);					// 0x70
+	DECL_DECOMPILE(GetNextArrayKey);					// 0x71
+	DECL_DECOMPILE(GetUndefined2);						// 0x73
+	DECL_DECOMPILE(skipdev);							// 0x7B
+
+	// stack functions //
+	void InitStacks();
+	void FreeStacks();
+
+	// global stack
+	template <class T>
+	void StackPush(T value, VariableType type)
+	{
+		if (sizeof(value) > sizeof(DWORD))
+		{
+			cout << "StackPush: value must not be longer than 4 bytes long" << endl;
+			cin.get();
+			ExitProcess(-1);
+		}
+
+		stack.currentVar++;
+
+		*(T*)&stack.currentVar->value = value;
+		stack.currentVar->type = type;
+		stack.currentVar->flags = 0;
+	}
+	void StackPop();
+	DWORD StackGetValue(int index);
+	VariableType StackGetValueType(int index);
+	DWORD StackGetLastValue();
+	VariableType StackGetLastValueType();
+	DWORD StackGetRelativePos();
+
+	OperatorsInfo* StackGetOperatorsInfo(int index);
+	void StackSetOperatorsInfo(OperatorsInfo* operatorsInfo);
+
+	// local stack
+	void StackLocalPush(char* varName);
+	void StackLocalPop();
+	char* StackLocalGetValue(int index);
+
+public:
+	// class constructor //
+	GSCDecompilerClass()
+	{
+		// reset to 0 every member from this class (can't use memset since it will leave memory leaks because of string decompiledBuffer)
+		this->curTabLevel = 0;
+
+		this->opcode_dec = false;
+
+		this->opcodesPtr = 0;
+
+		this->gscBuffer = 0;
+		this->decompileStart = 0;
+		this->decompileSize = 0;
+		this->isFunction = false;
+
+		memset(&this->stack, 0, sizeof(vmStack_s));
+
+		this->CurrentObject = OBJECT_NONE;
+		this->CastedObject = 0;
+
+		memset(this->VariableNameBuffer, 0, sizeof(VariableNameBuffer));
+		
+		// init the stacks
+		this->InitStacks();
+	}
+
+	// class destructor //
+	~GSCDecompilerClass()
+	{
+		// free the stacks
+		this->FreeStacks();
+
+		// free the current casted object if there's one
+		if (this->CastedObject)
+			free(this->CastedObject);
+	}
+};

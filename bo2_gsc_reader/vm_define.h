@@ -78,13 +78,3 @@ struct OperatorsInfo
 	OperatorType* operatorList;
 	DWORD* operatorExecutionOrder;
 };
-
-struct StackEntry
-{
-	VariableType type;
-	DWORD value;		// pointer to the decompiled string when type is type_decompiled_string
-						// NULL when it's type_precodepos
-
-	OperatorsInfo* operatorsInfo;
-	DWORD flags; // remove later
-};

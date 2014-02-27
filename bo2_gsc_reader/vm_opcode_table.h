@@ -42,7 +42,7 @@ typedef enum
 	OP_RemoveLocalVariables = 0x18,
 	OP_EvalLocalVariableCached = 0x19,
 	OP_EvalArray = 0x1A,
-	OP_EvalLocalArrayRefCached = 0x1B, // not sure of this array, however i think its correct!
+	OP_EvalLocalArrayRefCached = 0x1B, // not handled
 	OP_EvalArrayRef = 0x1C,
 	OP_ClearArray = 0x1D,
 	OP_EmptyArray = 0x1E,
@@ -86,7 +86,7 @@ typedef enum
 	There is no code written by the decompiler if it's an Expr if
 	*/
 	OP_jump = 0x3F, // does same as OP_skipdev
-	OP_jumpback = 0x40,
+	OP_jumpback = 0x40, // not handled
 	OP_inc = 0x41,
 	OP_dec = 0x42,
 	OP_bit_or = 0x43,
@@ -116,6 +116,8 @@ typedef enum
 	OP_vector = 0x5B,
 	OP_GetHash = 0x5C, // doesn't exist in cod4
 
+	// 0x5D seems some kind of wait
+
 	OP_GetSimpleVector = 0x5E, // doesn't exist in cod4 (the functions below neither do)
 	OP_isdefined = 0x5F,
 	OP_vectorscale = 0x60,
@@ -134,16 +136,11 @@ typedef enum
 	OP_getdvarcolorgreen = 0x6D,
 	OP_getdvarcolorblue = 0x6E,
 	OP_getdvarcoloralpha = 0x6F,
-
 	OP_GetFirstArrayKey = 0x70,
 	OP_GetNextArrayKey = 0x71,
 	OP_weird3 = 0x72, // this one is easy, too lazy to implement
-
 	OP_GetUndefined2 = 0x73, // does the same thing as OP_GetUndefined
-
-	// OP_DecTop2 ? - when var is not type_codePos
-	// OP_Unknown74 = 0x74,
-
+	OP_Unknown74 = 0x74, // does OP_DecTop when last var is not of type type_codePos
 	OP_NOP = 0x75,
 	OP_abort = 0x76,
 	OP_object = 0x77,
