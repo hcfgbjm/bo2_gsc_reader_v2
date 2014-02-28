@@ -210,7 +210,7 @@ DEF_DECOMPILE(Return)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	DecompilerOut("return %s;\n", true, StackGetLastValue());
+	DecompilerOut("return %s;\n", true, StackGetValue(0));
 
 	StackPop(); // the game obviously doesn't do it, but we need to do it
 
@@ -732,7 +732,7 @@ DEF_DECOMPILE(EvalArrayRef)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	sprintf_s(VariableNameBuffer, "%s[%s]", VariableNameBuffer, StackGetLastValue());
+	sprintf_s(VariableNameBuffer, "%s[%s]", VariableNameBuffer, StackGetValue(0));
 
 	StackPop();
 
@@ -750,7 +750,7 @@ DEF_DECOMPILE(ClearArray)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	DecompilerOut("%s[%s] = undefined;\n", true, VariableNameBuffer, StackGetLastValue());
+	DecompilerOut("%s[%s] = undefined;\n", true, VariableNameBuffer, StackGetValue(0));
 
 	StackPop();
 
@@ -926,7 +926,7 @@ DEF_DECOMPILE(SetVariableField)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetLastValue());
+	DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetValue(0));
 
 	StackPop();
 
@@ -944,7 +944,7 @@ DEF_DECOMPILE(wait)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	DecompilerOut("wait %s;\n", true, (char*)StackGetLastValue());
+	DecompilerOut("wait %s;\n", true, (char*)StackGetValue(0));
 
 	StackPop();
 
@@ -1017,7 +1017,7 @@ DEF_DECOMPILE(ScriptFunctionCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
+	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptFunctionCallPointer( \"%s\" );", true, FunctionName);
@@ -1069,7 +1069,7 @@ DEF_DECOMPILE(ScriptMethodCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
+	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodCallPointer( \"%s\" );", true, FunctionName);
@@ -1121,7 +1121,7 @@ DEF_DECOMPILE(ScriptThreadCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
+	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptThreadCallPointer( \"%s\" );", true, FunctionName);
@@ -1173,7 +1173,7 @@ DEF_DECOMPILE(ScriptMethodThreadCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetLastValue(), (DWORD)opcodesPtr - gscBuffer);
+	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodThreadCallPointer( \"%s\" );", true, FunctionName);
@@ -1222,7 +1222,7 @@ DEF_DECOMPILE(CastFieldObject)
 
 	if (CastedObject)
 		free(CastedObject);
-	CastedObject = MallocAndSprintf("%s", StackGetLastValue());
+	CastedObject = MallocAndSprintf("%s", StackGetValue(0));
 
 	StackPop();
 
@@ -1256,7 +1256,7 @@ DEF_DECOMPILE(BoolNot)
 
 	//StackSetFlag(OP_FLAG_BOOL_NOT); // are flags even needed? :P
 
-	char* BoolNot = MallocAndSprintf("!(%s)", StackGetLastValue());
+	char* BoolNot = MallocAndSprintf("!(%s)", StackGetValue(0));
 
 	StackPop();
 	StackPush<char*>(BoolNot, type_decompiled_string);
@@ -1721,7 +1721,7 @@ DEF_DECOMPILE(size)
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	char* SizeAppended = MallocAndSprintf("%s.size", StackGetLastValue());
+	char* SizeAppended = MallocAndSprintf("%s.size", StackGetValue(0));
 
 	StackPop(); // pop so it frees the old decompiled string
 	StackPush<char*>(SizeAppended, type_decompiled_string);
@@ -1820,7 +1820,7 @@ DEF_DECOMPILE(switch)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-		DecompilerOut("// OP_switch( %s );", true, StackGetLastValue());
+		DecompilerOut("// OP_switch( %s );", true, StackGetValue(0));
 		WriteRegisterInfo(currentPos - 1);
 	}
 
@@ -2220,7 +2220,7 @@ DEF_DECOMPILE(GetFirstArrayKey)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_GetFirstArrayKey( %s );", true, StackGetLastValue());
+	DecompilerOut("// OP_GetFirstArrayKey( %s );", true, StackGetValue(0));
 	WriteRegisterInfo(currentPos - 1);
 	}
 

@@ -81,16 +81,6 @@ void GSCDecompilerClass::StackSetOperatorsInfo(OperatorsInfo* operatorsInfo)
 	stack.currentVar->operatorsInfo = operatorsInfo;
 }
 
-DWORD GSCDecompilerClass::StackGetLastValue()
-{
-	return StackGetValue(0);
-}
-
-VariableType GSCDecompilerClass::StackGetLastValueType()
-{
-	return StackGetValueType(0);
-}
-
 DWORD GSCDecompilerClass::StackGetRelativePos()
 {
 	return (stack.currentVar - stack.vars + 1) * sizeof(StackEntry*);

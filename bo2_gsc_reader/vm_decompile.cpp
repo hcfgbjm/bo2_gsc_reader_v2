@@ -40,7 +40,7 @@ char* GSCDecompilerClass::GetStringForCurrentObject()
 
 	if (includeNegation)
 		AddString("!(", false);
-	AddString((char*)StackGetLastValue(), false);
+	AddString((char*)StackGetValue(0), false);
 	if (includeNegation)
 		AddString(")", false);
 
@@ -96,7 +96,7 @@ void GSCDecompilerClass::waittill_call_decompile(char* functionName, BYTE* curre
 	string _FunctionString;
 	
 	// append the method object
-	_FunctionString.append((char*)StackGetLastValue());
+	_FunctionString.append((char*)StackGetValue(0));
 	_FunctionString.append(" ");
 	
 	StackPop(); // pop the method object (like self, etc...) from the stack
@@ -104,7 +104,7 @@ void GSCDecompilerClass::waittill_call_decompile(char* functionName, BYTE* curre
 	// write the function name and write all the parameters
 	_FunctionString.append(functionName);
 	_FunctionString.append("( ");
-	_FunctionString.append((char*)StackGetLastValue());
+	_FunctionString.append((char*)StackGetValue(0));
 
 	StackPop(); // pop the single waittill parameter
 
@@ -137,7 +137,7 @@ void GSCDecompilerClass::call_decompile(char* functionName, bool hasPrecodepos, 
 	
 	if (methodCall)
 	{
-		_FunctionString.append((char*)StackGetLastValue());
+		_FunctionString.append((char*)StackGetValue(0));
 		_FunctionString.append(" ");
 
 		StackPop(); // pop the method object (like self, etc...) from the stack
@@ -164,7 +164,7 @@ void GSCDecompilerClass::call_decompile(char* functionName, bool hasPrecodepos, 
 
 		for (DWORD i = 0; i < numOfParameters; i++)
 		{
-			_FunctionString.append((char*)StackGetLastValue());
+			_FunctionString.append((char*)StackGetValue(0));
 			StackPop();
 
 			if ((i + 1) < numOfParameters) // execute this only if it's not the last iteration
@@ -214,7 +214,7 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 		return switchEndIP;
 	}
 
-	DecompilerOut("switch ( %s )\n", true, StackGetLastValue());
+	DecompilerOut("switch ( %s )\n", true, StackGetValue(0));
 	DecompilerOut("{\n", true);
 	IncTabLevel();
 
@@ -232,7 +232,7 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 	{
 		// Case name/value
 		BYTE* label = currentPos;
-		DWORD caseLabelOffset = *(DWORD*)label;
+		DWORD caseLabelValue = *(DWORD*)label;
 
 		// Case code pointer
 		BYTE* ip = curSwitchIPTablePos;
@@ -241,13 +241,15 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 		currentPos += 8;
 
 		// currentPos + ipOffset here = code ip for this case
-		if (!caseLabelOffset) // if caseLabelOffset is 0 this is a default case
+		if (!caseLabelValue) // if caseLabelOffset is 0 this is a default case
 			DecompilerOut("default:\n", true);
 		else
 		{
-			// add int or string detection (which will fix crashes in _utility.gsc)
-
-			DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelOffset));
+			// int case
+			if (caseLabelValue & (1 << 23)) // int cases have the 24th bit set always, and i've proven that checking it is safe unless gsc strings together are > 8MB
+				DecompilerOut("case %d:\n", true, caseLabelValue & ~(1 << 23));
+			else // string case
+				DecompilerOut("case \"%s\":\n", true, (char*)(gscBuffer + caseLabelValue));
 		}
 
 		DWORD curCaseIP = *(DWORD*)curSwitchIPTablePos; // relative instruction pointer for current case
@@ -512,30 +514,12 @@ void GSCDecompilerClass::build_operation(int index)
 	// we do this until only 1 operator is left to be processed
 	while (newOperatorsInfo->numOfOperators != 1)
 	{
-		// reset the processed operator indexes which will be used to calculate the order of execution by operator precedence
-		for (DWORD i = 0; i < newOperatorsInfo->numOfOperators; i++)
-			processedOperatorIndexes[i] = -1;
-
 		// we loop each operator, get it's execution order by operator precedence, and if it's wrong, then we put the operator's operands inside parenthesis
 		firstCorrectOperatorIndex = newOperatorsInfo->operatorExecutionOrder[0];
 		firstOperatorIndex = 0;
 
-		// get execution order by operator precedence
-		for (DWORD i2 = 0; i2 < newOperatorsInfo->numOfOperators; i2++)
+		for (DWORD i = 1; i < newOperatorsInfo->numOfOperators; i++)
 		{
-			if (processedOperatorIndexes[i2] == -1)
-			{
-				firstOperatorIndex = i2;
-				break;
-			}
-		}
-
-		for (DWORD i = 0; i < newOperatorsInfo->numOfOperators; i++)
-		{
-			// continue if the operator has been processed already or if the other operator is the same as the first operator we're processing
-			if (processedOperatorIndexes[i] != -1 || i == firstOperatorIndex)
-				continue;
-
 			// the lower the precedence, the more its preferred to be executed first
 			if (GetOperatorPrecedenceLevel(newOperatorsInfo->operatorList[i]) < GetOperatorPrecedenceLevel(newOperatorsInfo->operatorList[firstOperatorIndex]))
 				firstOperatorIndex = i;
@@ -583,21 +567,6 @@ void GSCDecompilerClass::build_operation(int index)
 		newOperatorsInfo->numOfOperands--;
 		newOperatorsInfo->numOfOperators--;
 	}
-
-	/*cout << "operands: " << endl;
-	for (DWORD i = 0; i < operatorsInfo->numOfOperands; i++)
-		cout << operatorsInfo->operandList[i] << endl;
-
-	cout << "operators: " << endl;
-	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
-		cout << operatorsInfo->operatorList[i] << endl;
-
-	cout << "execution order: " << endl;
-	for (DWORD i = 0; i < operatorsInfo->numOfOperators; i++)
-		cout << operatorsInfo->operatorExecutionOrder[i] << endl;
-
-	cout << endl;
-	cin.get();*/
 
 	// best part now, we create the operation string (there's 1 operator left only)
 	char* OperationString;
