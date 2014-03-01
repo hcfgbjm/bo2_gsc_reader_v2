@@ -50,6 +50,7 @@ end_param_decompilation:
 		crc32.AddData((BYTE*)(gscBuffer + gscFunc->start + i), 1);
 
 	GSCDecompilerClass gscDecompiler;
+	//gscDecompiler.opcode_dec = true;
 
 	// decompile function opcodes
 	string decompiledCode = gscDecompiler.decompile(NULL, gscBuffer, gscFunc->start, gscFuncSize, true, 1);

@@ -925,8 +925,9 @@ DEF_DECOMPILE(SetVariableField)
 	DecompilerOut("// OP_SetVariableField();", true);
 	WriteRegisterInfo(currentPos - 1);
 	}
-
-	DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetValue(0));
+	
+	if (!SetVariableField_compound_assignment_decompile())
+		DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetValue(0));
 
 	StackPop();
 
@@ -2292,6 +2293,7 @@ DEF_DECOMPILE(skipdev)
 
 	DecompilerOut("/#\n", false);
 	GSCDecompilerClass gscDecompiler;
+	//gscDecompiler.opcode_dec = true;
 	decompiledBuffer.append((char*)gscDecompiler.decompile(
 		&this->stack,
 		gscBuffer,

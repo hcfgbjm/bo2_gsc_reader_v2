@@ -58,10 +58,14 @@ void GSCDecompilerClass::StackPop()
 
 DWORD GSCDecompilerClass::StackGetValue(int index)
 {
-	// special case for type_buildable_operation (build the operation string if it's not built yet)
-	// sure need to build?!?!
-	if (StackGetValueType(index) == type_buildable_operation && !((stack.currentVar - index)->value))
+	// special case for type_buildable_operation (build the operation string)
+	if (StackGetValueType(index) == type_buildable_operation)
+	{
+		if ((stack.currentVar - index)->value)
+			free((void*)((stack.currentVar - index)->value));
+
 		build_operation(index);
+	}
 
 	return (stack.currentVar - index)->value;
 }

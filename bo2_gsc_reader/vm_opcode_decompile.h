@@ -65,6 +65,7 @@ private:
 	char* GetStringForOperator(OperatorType operatorType);
 	void build_operation(int index);
 	void operator_decompile(OperatorType operatorType);
+	bool SetVariableField_compound_assignment_decompile();
 
 	void WriteRegisterInfo(BYTE* ip);
 
@@ -203,8 +204,6 @@ private:
 	void StackPop();
 	DWORD StackGetValue(int index);
 	VariableType StackGetValueType(int index);
-	DWORD StackGetLastValue();
-	VariableType StackGetLastValueType();
 	DWORD StackGetRelativePos();
 
 	OperatorsInfo* StackGetOperatorsInfo(int index);

@@ -443,9 +443,15 @@ void GSCDecompilerClass::build_operation(int index)
 {
 	OperatorsInfo* operatorsInfo = StackGetOperatorsInfo(index);
 
-	if (operatorsInfo->numOfOperators < 1)
+	if (!operatorsInfo->numOfOperands)
 	{
-		cout << "Error: build_operation requested an operation to be built, but it has no operators" << endl;
+		cout << "Error: build_operation requested an operation to be built, but it has no operands" << endl;
+		cin.get();
+		ExitProcess(-1);
+	}
+	if (operatorsInfo->numOfOperands != operatorsInfo->numOfOperators + 1)
+	{
+		cout << "Error: build_operation requested an operation to be built, but numOfOperands != numOfOperators + 1" << endl;
 		cin.get();
 		ExitProcess(-1);
 	}
@@ -478,6 +484,18 @@ void GSCDecompilerClass::build_operation(int index)
 	OutputDebugStringA("Dump finished.\n");
 	#endif /* _DEBUG */
 
+	// if there are no operators, we just copy the only operand
+	if (!operatorsInfo->numOfOperators)
+	{
+		char* OperationString;
+		OperationString = MallocAndSprintf("%s", operatorsInfo->operandList[0]);
+		
+		// no need to check if value is allocated because StackGetValue does that for us already
+		(stack.currentVar - index)->value = (DWORD)OperationString;
+
+		return;
+	}
+
 	// new operators info which will be used to make the operation build easier
 	// basically this one is allowed to have multiple operands in operandList[x] and parenthesis in them
 	OperatorsInfo* newOperatorsInfo = (OperatorsInfo*)malloc(sizeof(OperatorsInfo));
@@ -505,8 +523,6 @@ void GSCDecompilerClass::build_operation(int index)
 		operatorsInfo->operatorExecutionOrder,
 		sizeof(DWORD) * operatorsInfo->numOfOperators
 		);
-
-	DWORD* processedOperatorIndexes = (DWORD*)malloc(sizeof(DWORD) * newOperatorsInfo->numOfOperators);
 
 	DWORD firstCorrectOperatorIndex = 0; // correct execution index of current processed operator (i)
 	DWORD firstOperatorIndex = 0;
@@ -574,9 +590,6 @@ void GSCDecompilerClass::build_operation(int index)
 
 	// no need to check if value is allocated because StackGetValue does that for us already
 	(stack.currentVar - index)->value = (DWORD)OperationString;
-
-	// free the stuff we've malloc'd
-	free(processedOperatorIndexes);
 	
 	// free the OperatorsInfo members (code from StackPop)
 	for (DWORD i = 0; i < newOperatorsInfo->numOfOperands; i++)
@@ -768,6 +781,91 @@ void GSCDecompilerClass::operator_decompile(OperatorType operatorType)
 	
 	StackPush<int>(NULL, type_buildable_operation);
 	StackSetOperatorsInfo(operatorsInfo);
+}
+
+// returns true if it decompiled a compound assignment, false if it didn't
+bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
+{
+	// compound assignment operator support
+	if (StackGetValueType(0) == type_buildable_operation)
+	{
+		OperatorsInfo* operatorsInfo = StackGetOperatorsInfo(0);
+		OperatorType Operator = operatorsInfo->operatorList[0];
+
+		if (
+			// string comparing is the only way i guess
+			!strcmp(VariableNameBuffer, operatorsInfo->operandList[0])
+			&&
+			// check if the first operator on the right side is executed last
+			operatorsInfo->operatorExecutionOrder[0] == operatorsInfo->numOfOperators - 1
+			&&
+			(
+			Operator == OP_PLUS			||
+			Operator == OP_MINUS		||
+			Operator == OP_MULTIPLY		||
+			Operator == OP_DIVIDE		||
+			Operator == OP_MOD			||
+			Operator == OP_SHIFT_LEFT	||
+			Operator == OP_SHIFT_RIGHT	||
+			Operator == OP_BIT_AND		||
+			Operator == OP_BIT_EX_OR	||
+			Operator == OP_BIT_OR
+			))
+		{
+			// delete the first operand/operator on the right side (no need to fix execution order here)
+			free(operatorsInfo->operandList[0]);
+
+			for (DWORD i = 0; i < operatorsInfo->numOfOperands - 1; i++)
+				operatorsInfo->operandList[i] = operatorsInfo->operandList[i + 1];
+
+			for (DWORD i = 0; i < operatorsInfo->numOfOperators - 1; i++)
+				operatorsInfo->operatorList[i] = operatorsInfo->operatorList[i + 1];
+
+			operatorsInfo->numOfOperands--;
+			operatorsInfo->numOfOperators--;
+
+			// write the correct string based on the operation
+			switch (Operator)
+			{
+			case OP_PLUS:
+				DecompilerOut("%s += %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_MINUS:
+				DecompilerOut("%s -= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_MULTIPLY:
+				DecompilerOut("%s *= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_DIVIDE:
+				DecompilerOut("%s /= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_MOD:
+				DecompilerOut("%s %%= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_SHIFT_LEFT:
+				DecompilerOut("%s <<= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_SHIFT_RIGHT:
+				DecompilerOut("%s >>= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_BIT_AND:
+				DecompilerOut("%s &= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_BIT_EX_OR:
+				DecompilerOut("%s ^= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			case OP_BIT_OR:
+				DecompilerOut("%s |= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				break;
+			}
+
+			return true;
+		}
+		else
+			return false;
+	}
+	else
+		return false;
 }
 
 void GSCDecompilerClass::WriteRegisterInfo(BYTE* ip)
