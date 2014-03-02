@@ -28,6 +28,34 @@ char* MallocAndSprintf(char* format, ...)
 	return allocatedString;
 }
 
+// This code is found in Dvar_RegisterNew ("Can't create dvar" string)
+// char is supposed to be 1 byte long here
+// Modified DJB2 algorithm
+DWORD GetDvarHash(char* dvar)
+{
+	char* v8 = dvar;
+
+	if (dvar)
+	{
+		char v26 = *dvar;
+		DWORD v25 = 5381;
+
+		if (*dvar)
+		{
+			do
+			{
+				v8++;
+				v25 = 33 * v25 + tolower(v26);
+				v26 = *v8;
+			} while (*v8);
+		}
+
+		return v25;
+	}
+	else
+		return 0;
+}
+
 const DWORD Crc32::kCrc32Table[256] =
 {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba,

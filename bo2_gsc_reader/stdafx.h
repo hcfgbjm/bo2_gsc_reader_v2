@@ -18,6 +18,8 @@
 
 #include "utility.h"
 
+#include "dvar_lookup.h"
+
 #include "bo2_gsc_file.h"
 #include "bo2_gsc_reader.h"
 

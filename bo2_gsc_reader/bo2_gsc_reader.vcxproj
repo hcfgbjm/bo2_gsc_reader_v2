@@ -92,6 +92,7 @@
     <ClInclude Include="bo2_dvar_list.h" />
     <ClInclude Include="bo2_gsc_file.h" />
     <ClInclude Include="bo2_gsc_reader.h" />
+    <ClInclude Include="dvar_lookup.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="utility.h" />
@@ -107,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bo2_gsc_reader.cpp" />
+    <ClCompile Include="dvar_lookup.cpp" />
     <ClCompile Include="utility.cpp" />
     <ClCompile Include="vm_decompile.cpp" />
     <ClCompile Include="vm_opcode.cpp" />

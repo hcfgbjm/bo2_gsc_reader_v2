@@ -1876,14 +1876,21 @@ DEF_DECOMPILE(GetHash)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* Hash = MallocAndSprintf("#\"0x%X\"", *(DWORD*)GET_ALIGNED_DWORD(currentPos));
+	DWORD hashValue		= *(DWORD*)GET_ALIGNED_DWORD(currentPos);
+	char *hash			= nullptr;
+	const char *value	= DvarNameForHash(hashValue);
+
+	if (!value)
+		hash = MallocAndSprintf("#\"0x%X\"", hashValue);
+	else
+		hash = MallocAndSprintf("#\"%s\"", value);
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_GetHash( %s );", true, Hash);
+	DecompilerOut("// OP_GetHash( %s );", true, hash);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	StackPush<char*>(Hash, type_decompiled_string);
+	StackPush<char*>(hash, type_decompiled_string);
 
 	currentPos = GET_ALIGNED_DWORD(currentPos) + 4;
 

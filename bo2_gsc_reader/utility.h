@@ -6,6 +6,8 @@ __inline BYTE* GET_ALIGNED_DWORD	(BYTE* x) { return (BYTE*)(((DWORD)x + 3) & 0xF
 int GetFormattedLength(char *format, ...);
 char* MallocAndSprintf(char* format, ...);
 
+DWORD GetDvarHash(char* dvar);
+
 class Crc32
 {
 public:

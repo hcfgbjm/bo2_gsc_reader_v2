@@ -180,34 +180,6 @@ void LoadGSC()
 	}
 }
 
-// This code is found in Dvar_RegisterNew ("Can't create dvar" string)
-// char is supposed to be 1 byte long here
-DWORD GetDvarHash(char* dvar)
-{
-	char* v8 = dvar;
-
-	if (dvar)
-	{
-		char v26 = *dvar;
-		DWORD v25 = 5381;
-
-		if ( *dvar )
-		{
-			do
-			{
-				v8++;
-				v25 = 33 * v25 + tolower(v26);
-				v26 = *v8;
-			}
-			while ( *v8 );
-		}
-
-		return v25;
-	}
-	else
-		return 0;
-}
-
 void DecompileGSC()
 {
 	COD9_GSC* gsc = (COD9_GSC*)gscBuffer;
@@ -353,6 +325,13 @@ void DecompileGSC()
 
 int wmain(int argc, wchar_t *argv[])
 {
+	// Load dvars
+	if (!InitDvarTable("dvarlist.txt"))
+		return 1;
+
+	if (!ParseDvarTable())
+		return 1;
+
 	// add error checks
 
 	FILE *gscFile = NULL;
