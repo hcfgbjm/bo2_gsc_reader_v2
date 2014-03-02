@@ -557,7 +557,7 @@ void GSCDecompilerClass::build_operation(int index)
 		if (firstOperatorIndex != firstCorrectOperatorIndex)
 		{
 			char* oldOperation = newOperation;
-			newOperation = MallocAndSprintf("(%s)", oldOperation);
+			newOperation = MallocAndSprintf("( %s )", oldOperation);
 
 			free(oldOperation);
 		}
@@ -866,6 +866,121 @@ bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
 	}
 	else
 		return false;
+}
+
+bo2_opcode foreach_pattern[] =
+{
+	OP_EvalLocalVariableCached,
+	OP_GetFirstArrayKey,
+	OP_EvalLocalVariableRefCached,
+	OP_SetVariableField,
+	OP_EvalLocalVariableCached,
+	OP_isdefined,
+	OP_JumpOnFalse,
+	OP_EvalLocalVariableCached,
+	OP_EvalLocalVariableCached,
+	OP_EvalArray,
+	OP_EvalLocalVariableRefCached,
+	OP_SetVariableField
+};
+
+// returns where OP_SetVariableField_Decompile should jump to
+// or 0 if this isn't a foreach
+BYTE* GSCDecompilerClass::SetVariableField_foreach_decompile(BYTE* currentPos)
+{
+	// NEED TO ADD SECURITY CHECK BECAUSE I MIGHT READ PAST THE FUNCTION
+
+	// try to find the foreach pattern
+	if (PatternFound(foreach_pattern, sizeof(foreach_pattern) / sizeof(bo2_opcode), currentPos))
+	{
+		// we found the pattern, now we need to check if its really a foreach
+		BYTE* currentCheckPos = currentPos;
+
+		char* arrayName = StackLocalGetValue(*(currentCheckPos + 1)); // get name of the array (_a*) from OP_EvalLocalVariableCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_EvalLocalVariableCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_GetFirstArrayKey
+
+		char* varName = StackLocalGetValue(*(currentCheckPos + 1)); // get name of the variable (_k*) from OP_EvalLocalVariableRefCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_EvalLocalVariableRefCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_SetVariableField
+
+		// check that the parameter for IsDefined is going to be the variable
+		if (StackLocalGetValue(*(currentCheckPos + 1)) != varName)
+			return 0;
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_EvalLocalVariableCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_isdefined
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_JumpOnFalse
+
+		// check that the parameters for both OP_EvalLocalVariableCached are going to be the variable and the array names, respectively
+		if (StackLocalGetValue(*(currentCheckPos + 1)) != varName)
+			return 0;
+		currentCheckPos += gsclde(currentCheckPos); // skip the first OP_EvalLocalVariableCached
+		if (StackLocalGetValue(*(currentCheckPos + 1)) != arrayName)
+			return 0;
+		currentCheckPos += gsclde(currentCheckPos); // skip the second OP_EvalLocalVariableCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_EvalArray
+
+		// get the real var and array name (not the compiler generated ones)
+		char* realVarName = StackLocalGetValue(*(currentCheckPos + 1));
+		char* realArrayName = (char*)StackGetValue(0);
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_EvalLocalVariableRefCached
+		currentCheckPos += gsclde(currentCheckPos); // skip OP_SetVariableField
+
+		// at this moment, the block inside foreach starts at currentCheckPos
+		DWORD foreachCodeStart = (DWORD)(currentCheckPos - gscBuffer);
+		DWORD foreachCodeSize = 0;
+
+		// read the opcodes until we find two OP_EvalLocalVariableCached and an OP_GetNextArrayKey right after those to get the size of the foreach block
+		// the first param of OP_GetNextArrayKey must match with arrayName
+		while (
+			*currentCheckPos != OP_EvalLocalVariableCached			||
+			*(currentCheckPos + 2) != OP_EvalLocalVariableCached	||
+			*(currentCheckPos + 4) != OP_GetNextArrayKey			||
+			StackLocalGetValue(*(currentCheckPos + 3)) != arrayName
+			)
+		{
+			// safe check
+			if ((DWORD)(currentCheckPos - gscBuffer) >= decompileStart + decompileSize)
+				return 0;
+
+			currentCheckPos += gsclde(currentCheckPos);
+		}
+		foreachCodeSize = ((DWORD)currentCheckPos - gscBuffer) - foreachCodeStart;
+
+		// decompile the foreach block
+		DecompilerOut("foreach ( %s in %s )\n", true, realVarName, realArrayName);
+
+		DecompilerOut("{\n", true);
+		IncTabLevel();
+		GSCDecompilerClass decompiler;
+		decompiledBuffer.append((decompiler.decompile(&this->stack, gscBuffer, foreachCodeStart, foreachCodeSize, false, curTabLevel)).c_str());
+		DecTabLevel();
+		DecompilerOut("}\n", true);
+
+		// skip the two OP_EvalLocalVariableCached, OP_GetNextArrayKey, OP_EvalLocalVariableRefCached, OP_SetVariableField and OP_jump to return the new current pos
+		currentCheckPos += gsclde(currentCheckPos);
+		currentCheckPos += gsclde(currentCheckPos);
+		currentCheckPos += gsclde(currentCheckPos);
+		currentCheckPos += gsclde(currentCheckPos);
+		currentCheckPos += gsclde(currentCheckPos);
+		currentCheckPos += gsclde(currentCheckPos);
+
+		return currentCheckPos;
+	}
+
+	return 0;
+}
+
+bool GSCDecompilerClass::PatternFound(bo2_opcode* pattern, DWORD numOfOpcodesToMatch, BYTE* currentPos)
+{
+	BYTE* currentPatternPos = currentPos;
+	for (DWORD i = 0; i < numOfOpcodesToMatch; currentPatternPos += gsclde(currentPatternPos), i++)
+	{
+		if ((DWORD)(currentPatternPos - gscBuffer) >= decompileStart + decompileSize || *currentPatternPos != pattern[i])
+			return false;
+	}
+
+	return true;
 }
 
 void GSCDecompilerClass::WriteRegisterInfo(BYTE* ip)

@@ -67,6 +67,10 @@ private:
 	void operator_decompile(OperatorType operatorType);
 	bool SetVariableField_compound_assignment_decompile();
 
+	BYTE* SetVariableField_foreach_decompile(BYTE* currentPos);
+
+	bool PatternFound(bo2_opcode* pattern, DWORD numOfOpcodesToMatch, BYTE* currentPos);
+
 	void WriteRegisterInfo(BYTE* ip);
 
 	// opcode decompiling functions //

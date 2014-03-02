@@ -48,7 +48,7 @@ string GSCDecompilerClass::decompile(vmStack_s* initialStack, DWORD gscBuffer, D
 	this->isFunction = isFunction;
 	curTabLevel = initialTabLevel;
 
-	while (true)
+	while (opcodesPtr < (BYTE*)(gscBuffer + start + size))
 	{
 		switch (*opcodesPtr)
 		{
@@ -162,12 +162,9 @@ string GSCDecompilerClass::decompile(vmStack_s* initialStack, DWORD gscBuffer, D
 			CASE_DECOMPILE(GetUndefined2);						// 0x73
 			CASE_DECOMPILE(skipdev);							// 0x7B
 		default:
-			DecompilerOut("\t/* Error: unknown opcode (0x%X) */\n", true, *opcodesPtr);
+			DecompilerOut("/* Error: unknown opcode (0x%X) */\n", true, *opcodesPtr);
 			goto end_opcode_decompilation;
 		}
-
-		if (opcodesPtr >= (BYTE*)(gscBuffer + start + size))
-			break;
 	}
 end_opcode_decompilation:
 
@@ -925,9 +922,16 @@ DEF_DECOMPILE(SetVariableField)
 	DecompilerOut("// OP_SetVariableField();", true);
 	WriteRegisterInfo(currentPos - 1);
 	}
-	
-	if (!SetVariableField_compound_assignment_decompile())
-		DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetValue(0));
+
+	BYTE* newCurrentPos = SetVariableField_foreach_decompile(currentPos);
+
+	if (newCurrentPos)
+		currentPos = newCurrentPos;
+	else
+	{
+		if (!SetVariableField_compound_assignment_decompile())
+			DecompilerOut("%s = %s;\n", true, VariableNameBuffer, StackGetValue(0));
+	}
 
 	StackPop();
 
@@ -1286,7 +1290,7 @@ DEF_DECOMPILE(JumpOnFalse)
 	currentPos += 1; // opcode size 1 byte
 
 	if (opcode_dec) {
-	DecompilerOut("// OP_JumpOnFalse( 0x%X );", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	DecompilerOut("// OP_JumpOnFalse( 0x%X ( %d ) ); ( 0x%X )", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)), *(__int16*)(GET_ALIGNED_WORD(currentPos)), (DWORD)GET_ALIGNED_WORD(currentPos) + *(__int16*)(GET_ALIGNED_WORD(currentPos)) + 2 - gscBuffer);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
@@ -1318,7 +1322,7 @@ DEF_DECOMPILE(JumpOnTrue)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_JumpOnTrue( 0x%X );", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	DecompilerOut("// OP_JumpOnTrue( 0x%X ( %d ) ); ( 0x%X )", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)), *(__int16*)(GET_ALIGNED_WORD(currentPos)), (DWORD)GET_ALIGNED_WORD(currentPos) + *(__int16*)(GET_ALIGNED_WORD(currentPos)) + 2 - gscBuffer);
 	WriteRegisterInfo(currentPos - 1);
 	}
 	
@@ -1350,7 +1354,7 @@ DEF_DECOMPILE(JumpOnFalseExpr)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_JumpOnFalseExpr( 0x%X );", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	DecompilerOut("// OP_JumpOnFalseExpr( 0x%X ( %d ) ); ( 0x%X )", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)), *(__int16*)(GET_ALIGNED_WORD(currentPos)), (DWORD)GET_ALIGNED_WORD(currentPos) + *(__int16*)(GET_ALIGNED_WORD(currentPos)) + 2 - gscBuffer);
 	WriteRegisterInfo(currentPos - 1);
 	}
 	
@@ -1382,7 +1386,7 @@ DEF_DECOMPILE(JumpOnTrueExpr)
 	currentPos += 1; // opcode size 1 byte
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_JumpOnTrueExpr( 0x%X );", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	DecompilerOut("// OP_JumpOnTrueExpr( 0x%X ( %d ) ); ( 0x%X )", true, *(WORD*)(GET_ALIGNED_WORD(currentPos)), *(__int16*)(GET_ALIGNED_WORD(currentPos)), (DWORD)GET_ALIGNED_WORD(currentPos) + *(__int16*)(GET_ALIGNED_WORD(currentPos)) + 2 - gscBuffer);
 	WriteRegisterInfo(currentPos - 1);
 	}
 	

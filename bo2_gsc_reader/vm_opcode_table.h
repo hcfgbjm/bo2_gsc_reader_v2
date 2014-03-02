@@ -13,7 +13,7 @@
 
 // Ref = dont use stack
 // else use stack
-typedef enum
+enum bo2_opcode
 {
 	OP_End = 0x0,
 	OP_Return = 0x1,
