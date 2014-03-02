@@ -116,12 +116,17 @@ bool ParseDvarTable()
 
 const char *DvarNameForHash(int Hash)
 {
-	for (int i = 0; i < DvarEntryCount; i++)
+	if (DvarFileMemory && DvarEntries)
 	{
-		if (DvarEntries[i].m_Hash == Hash)
-			return DvarEntries[i].m_Name;
+		for (int i = 0; i < DvarEntryCount; i++)
+		{
+			if (DvarEntries[i].m_Hash == Hash)
+				return DvarEntries[i].m_Name;
+		}
+
+		printf("Unknown hash value 0x%X\n", Hash);
+		return nullptr;
 	}
 
-	printf("Unknown hash value 0x%X\n", Hash);
 	return nullptr;
 }

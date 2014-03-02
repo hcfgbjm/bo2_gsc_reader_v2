@@ -37,7 +37,9 @@ void DumpGSCHeader(_COD9_GSC *Header)
 	printf("numOfRelocations:\t%d\n", Header->numOfRelocations);
 	printf("unknown4:\t\t%d\n", unknown4);
 	printf("numOfIncludes:\t\t%d\n", Header->numOfIncludes);
-	printf("numOfUsinganimtree:\t%d\n", Header->numOfUsinganimtree);
+	printf("numOfUsinganimtree:\t%d\n\n", Header->numOfUsinganimtree);
+
+	cin.get();
 }
 
 void AddString(char* format, bool addTabLevel, ...)
@@ -325,15 +327,7 @@ void DecompileGSC()
 
 int wmain(int argc, wchar_t *argv[])
 {
-	// Load dvars
-	if (!InitDvarTable("dvarlist.txt"))
-		return 1;
-
-	if (!ParseDvarTable())
-		return 1;
-
 	// add error checks
-
 	FILE *gscFile = NULL;
 	errno_t _errno_ = 0; 
 	LONG fileSize = 0L;
@@ -391,13 +385,19 @@ int wmain(int argc, wchar_t *argv[])
 	// close the file
 	fclose(gscFile);
 
+	// Load dvars
+	if (InitDvarTable("dvarlist.txt"))
+		ParseDvarTable();
+
 	// create output file
 	decompiledFile.open(szOutFileName);
 
 	// load the gsc (external functions resolving, includes, etc...)
 	//LoadGSC(); // delete this later
 
+	#ifdef _DEBUG
 	DumpGSCHeader((COD9_GSC*)gscBuffer);
+	#endif
 
 	// decompile the gsc
 	DecompileGSC();

@@ -888,8 +888,6 @@ bo2_opcode foreach_pattern[] =
 // or 0 if this isn't a foreach
 BYTE* GSCDecompilerClass::SetVariableField_foreach_decompile(BYTE* currentPos)
 {
-	// NEED TO ADD SECURITY CHECK BECAUSE I MIGHT READ PAST THE FUNCTION
-
 	// try to find the foreach pattern
 	if (PatternFound(foreach_pattern, sizeof(foreach_pattern) / sizeof(bo2_opcode), currentPos))
 	{
@@ -933,9 +931,12 @@ BYTE* GSCDecompilerClass::SetVariableField_foreach_decompile(BYTE* currentPos)
 		// read the opcodes until we find two OP_EvalLocalVariableCached and an OP_GetNextArrayKey right after those to get the size of the foreach block
 		// the first param of OP_GetNextArrayKey must match with arrayName
 		while (
-			*currentCheckPos != OP_EvalLocalVariableCached			||
+			*(currentCheckPos + 0) != OP_EvalLocalVariableCached	||
 			*(currentCheckPos + 2) != OP_EvalLocalVariableCached	||
 			*(currentCheckPos + 4) != OP_GetNextArrayKey			||
+			*(currentCheckPos + 5) != OP_EvalLocalVariableRefCached	|| // might want to check which variablenz
+			*(currentCheckPos + 7) != OP_SetVariableField			||
+			*(currentCheckPos + 8) != OP_jump						|| // might want to check where does dis jumpz
 			StackLocalGetValue(*(currentCheckPos + 3)) != arrayName
 			)
 		{
