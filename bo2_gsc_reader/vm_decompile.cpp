@@ -840,7 +840,7 @@ bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
 				DecompilerOut("%s /= %s;\n", true, VariableNameBuffer, StackGetValue(0));
 				break;
 			case OP_MOD:
-				DecompilerOut("%s %%= %s;\n", true, VariableNameBuffer, StackGetValue(0));
+				DecompilerOut("%s %s= %s;\n", true, VariableNameBuffer, "%%", StackGetValue(0)); // double modulus fix
 				break;
 			case OP_SHIFT_LEFT:
 				DecompilerOut("%s <<= %s;\n", true, VariableNameBuffer, StackGetValue(0));
