@@ -351,7 +351,7 @@ int wmain(int argc, wchar_t *argv[])
 
 		of.lStructSize	= sizeof(of);
 		of.hwndOwner	= NULL;
-		of.lpstrFilter	= L"GameScript files (*.gsc)\0*.gsc\0";
+		of.lpstrFilter	= L"GameScript/ClientScript files (*.gsc;*.csc)\0*.gsc;*.csc\0";
 		of.lpstrFile	= szFileName;
 		of.nMaxFile		= ARRAYSIZE(szFileName);
 		of.Flags		= OFN_EXPLORER | OFN_FILEMUSTEXIST;
@@ -364,7 +364,7 @@ int wmain(int argc, wchar_t *argv[])
 	}
 
 	//rewrite the new extension
-	if(!wcsreplace(szOutFileName, L".gsc", L".txt"))
+	if(!wcsreplace(szOutFileName, L".gsc", L".txt") && !wcsreplace(szOutFileName, L".csc", L".txt"))
 		return 1;
 
 	//open file
