@@ -290,7 +290,7 @@ BYTE* GSCDecompilerClass::switch_decompile(BYTE* currentPos)
 				}
 				else if (*curCasePos == OP_endswitch)
 				{
-					caseHasBreak = true;
+					nextCaseIP ? caseHasBreak = true : caseHasBreak = false;
 					break;
 				}
 				else if (nextCaseIP && curCasePos == (BYTE*)(gscBuffer + nextCaseIP))
