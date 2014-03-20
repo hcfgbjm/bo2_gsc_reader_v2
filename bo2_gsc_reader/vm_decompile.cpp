@@ -153,10 +153,10 @@ void GSCDecompilerClass::call_decompile(char* functionName, bool hasPrecodepos, 
 	}
 	
 	if (pointerCall)
-		_FunctionString.append("[[ ");
+		_FunctionString.append("[[");
 	_FunctionString.append(functionName);
 	if (pointerCall)
-		_FunctionString.append(" ]]");
+		_FunctionString.append("]]");
 
 	if (numOfParameters) // if the function has parameters
 	{
@@ -812,14 +812,18 @@ bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
 			Operator == OP_BIT_OR
 			))
 		{
-			// delete the first operand/operator on the right side (no need to fix execution order here)
+			// delete the first operand/operator on the right side
 			free(operatorsInfo->operandList[0]);
 
+			// shift the operands and operators/operator execution order to the left in the array
 			for (DWORD i = 0; i < operatorsInfo->numOfOperands - 1; i++)
 				operatorsInfo->operandList[i] = operatorsInfo->operandList[i + 1];
 
 			for (DWORD i = 0; i < operatorsInfo->numOfOperators - 1; i++)
+			{
 				operatorsInfo->operatorList[i] = operatorsInfo->operatorList[i + 1];
+				operatorsInfo->operatorExecutionOrder[i] = operatorsInfo->operatorExecutionOrder[i + 1];
+			}
 
 			operatorsInfo->numOfOperands--;
 			operatorsInfo->numOfOperators--;
