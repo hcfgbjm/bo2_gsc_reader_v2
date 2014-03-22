@@ -796,8 +796,8 @@ bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
 			// string comparing is the only way i guess
 			!strcmp(VariableNameBuffer, operatorsInfo->operandList[0])
 			&&
-			// check if the first operator on the right side is executed last
-			operatorsInfo->operatorExecutionOrder[0] == operatorsInfo->numOfOperators - 1
+			// check if the last operator executed is the first operator on the right side
+			operatorsInfo->operatorExecutionOrder[operatorsInfo->numOfOperators - 1] == 0 // 0 = first operator, 1 = second, etc...
 			&&
 			(
 			Operator == OP_PLUS			||
@@ -815,14 +815,14 @@ bool GSCDecompilerClass::SetVariableField_compound_assignment_decompile()
 			// delete the first operand/operator on the right side
 			free(operatorsInfo->operandList[0]);
 
-			// shift the operands and operators/operator execution order to the left in the array
+			// shift the operands and operators to the left in the array
 			for (DWORD i = 0; i < operatorsInfo->numOfOperands - 1; i++)
 				operatorsInfo->operandList[i] = operatorsInfo->operandList[i + 1];
 
 			for (DWORD i = 0; i < operatorsInfo->numOfOperators - 1; i++)
 			{
 				operatorsInfo->operatorList[i] = operatorsInfo->operatorList[i + 1];
-				operatorsInfo->operatorExecutionOrder[i] = operatorsInfo->operatorExecutionOrder[i + 1];
+				operatorsInfo->operatorExecutionOrder[i] -= 1; // 1 operator was deleted
 			}
 
 			operatorsInfo->numOfOperands--;
