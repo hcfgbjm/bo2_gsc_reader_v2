@@ -53,6 +53,7 @@ private:
 	char VariableNameBuffer[512];
 
 	// decompiler helper functions //
+	char* GetStringForEscapeSequenceByte(char byte);
 	char* GetStringForCurrentObject();
 
 	char* funcname_prepend_gscOfFunction(char* functionName, DWORD ip);

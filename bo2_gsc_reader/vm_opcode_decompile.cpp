@@ -378,15 +378,30 @@ DEF_DECOMPILE(GetString)
 
 	char* String = MallocAndSprintf("\"%s\"", gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 	char* StringTemp = NULL;
+	char* escapeSequenceString = NULL;
 
 	volatile size_t stringSize = strlen(String);
 
-	for (size_t i = 0; i < stringSize; i++)
+	// fix escape sequences & modulus http://en.cppreference.com/w/cpp/language/escape
+	for (size_t i = 1; i < stringSize - 1; i++) // i = 1 and stringSize - 1 because first and last char are "
 	{
-		if (String[i] == '\n') // fix for strings that have '\n' in them
+		// include trigraph support? don't think its needed
+		switch (String[i])
 		{
+		case '\"':
+		case '\\':
+		case '\0':
+		case '\a':
+		case '\b':
+		case '\f':
+		case '\n':
+		case '\r':
+		case '\t':
+		case '\v':
+			escapeSequenceString = GetStringForEscapeSequenceByte(String[i]);
+
 			String[i] = 0x00;
-			StringTemp = MallocAndSprintf("%s%s%s%s", String, "\\", "n", String + i + 1);
+			StringTemp = MallocAndSprintf("%s%s%s", String, escapeSequenceString, String + i + 1);
 
 			free(String);
 			String = (char*)malloc(strlen(StringTemp) + 1);
@@ -394,9 +409,9 @@ DEF_DECOMPILE(GetString)
 			free(StringTemp);
 
 			i++; // because we've added another character that doesn't need a check
-		}
-		else if (String[i] == '%') // fix for strings that have modulus in them (so DecompilerOut doesn't crash)
-		{
+
+			break;
+		case '%':
 			String[i] = 0x00;
 			StringTemp = MallocAndSprintf("%s%s%s", String, "%%", String + i + 1);
 
@@ -406,6 +421,8 @@ DEF_DECOMPILE(GetString)
 			free(StringTemp);
 
 			i++; // because we've added another character that doesn't need a check
+
+			break;
 		}
 
 		stringSize = strlen(String);
