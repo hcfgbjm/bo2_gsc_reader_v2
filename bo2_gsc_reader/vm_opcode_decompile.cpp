@@ -817,7 +817,7 @@ DEF_DECOMPILE(EvalFieldVariable)
 	char* FieldExpression = MallocAndSprintf("%s.%s", GetStringForCurrentObject(), gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 
 	if (opcode_dec) {
-	DecompilerOut("// OP_EvalFieldVariableRef( \"%s\" ); (%s)", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)), FieldExpression);
+	DecompilerOut("// OP_EvalFieldVariable( \"%s\" ); (%s)", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)), FieldExpression);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
