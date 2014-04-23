@@ -86,9 +86,10 @@ char* GSCDecompilerClass::GetStringForCurrentObject()
 }*/
 
 // ip = RELATIVE instruction pointer that points to the call opcode (for example 0x2E, which is OP_ScriptFunctionCall)
-// if we find out that the call is external (by searching through externalFunctions from the gsc header), we prepend
-// the right gscOfFunction to functionName
-char* GSCDecompilerClass::funcname_prepend_gscOfFunction(char* functionName, DWORD ip)
+// or the GetFunction opcode
+// if we find out that the call is external (by searching through externalFunctions from the gsc header), we return
+// the right gscOfFunction to functionName, and if not, we return NULL
+char* GSCDecompilerClass::get_gscOfFunction(char* functionName, DWORD ip)
 {
 	COD9_GSC* gsc = (COD9_GSC*)gscBuffer;
 
@@ -100,8 +101,15 @@ char* GSCDecompilerClass::funcname_prepend_gscOfFunction(char* functionName, DWO
 		{
 			if (references[i2] == ip && currentExternalFunction->gscOfFunction && *(char*)(gscBuffer + currentExternalFunction->gscOfFunction))
 			{
-				// found the externalFunction struct for this call - we return gscOfFunction::funtionName
-				char* result = MallocAndSprintf("%s::%s", gscBuffer + currentExternalFunction->gscOfFunction, functionName);
+				// found the externalFunction struct for this call - we return gscOfFunction::funtionName (not without fixing the slashes first)
+				char* fixed = _strdup((char*)(gscBuffer + currentExternalFunction->gscOfFunction));
+				for (char* i3 = fixed; i3 < fixed + strlen(fixed); i3++)
+				{
+					if (*i3 == '/')
+						*i3 = '\\';
+				}
+				char* result = MallocAndSprintf("%s::%s", fixed, functionName);
+				free(fixed);
 
 				return result;
 			}
@@ -113,10 +121,8 @@ char* GSCDecompilerClass::funcname_prepend_gscOfFunction(char* functionName, DWO
 		references = (DWORD*)(currentExternalFunction + 1);
 	}
 
-	// couldn't find externalFunction struct for this call - we return functionName
-	char* result = MallocAndSprintf("%s", functionName);
-
-	return result;
+	// couldn't find externalFunction struct for this call - we return nothing
+	return NULL;
 }
 
 // special call decompilation for waittill & waittillmatch

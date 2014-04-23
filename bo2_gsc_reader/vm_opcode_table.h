@@ -115,9 +115,7 @@ enum bo2_opcode
 	OP_endswitch = 0x5A,
 	OP_vector = 0x5B,
 	OP_GetHash = 0x5C, // doesn't exist in cod4
-
-	// 0x5D seems some kind of wait
-
+	OP_realwait = 0x5D,
 	OP_GetSimpleVector = 0x5E, // doesn't exist in cod4 (the functions below neither do)
 	OP_isdefined = 0x5F,
 	OP_vectorscale = 0x60,

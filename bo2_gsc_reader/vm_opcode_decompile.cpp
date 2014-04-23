@@ -139,6 +139,7 @@ string GSCDecompilerClass::decompile(vmStack_s* initialStack, DWORD gscBuffer, D
 			CASE_DECOMPILE(endswitch);							// 0x5A
 			CASE_DECOMPILE(vector);								// 0x5B
 			CASE_DECOMPILE(GetHash);							// 0x5C
+			CASE_DECOMPILE(realwait);							// 0x5D
 			CASE_DECOMPILE(GetSimpleVector);					// 0x5E
 			CASE_DECOMPILE(isdefined);							// 0x5F
 			CASE_DECOMPILE(vectorscale);						// 0x60
@@ -626,14 +627,16 @@ DEF_DECOMPILE(GetFunction)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 	
-	char* Function = MallocAndSprintf("::%s", gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos)));
+	char* FunctionName = get_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos))), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("::%s", gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos)));
 	
 	if (opcode_dec) {
-	DecompilerOut("// OP_GetFunction( \"%s\" );", true, Function);
+	DecompilerOut("// OP_GetFunction( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	StackPush<char*>(Function, type_decompiled_string);
+	StackPush<char*>(FunctionName, type_decompiled_string);
 
 	currentPos = GET_ALIGNED_DWORD(currentPos) + 4;
 
@@ -810,15 +813,15 @@ DEF_DECOMPILE(EvalFieldVariable)
 {
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
-
-	char* FieldVariable = MallocAndSprintf("%s.%s", GetStringForCurrentObject(), gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
+	
+	char* FieldExpression = MallocAndSprintf("%s.%s", GetStringForCurrentObject(), gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 
 	if (opcode_dec) {
-	DecompilerOut("// OP_EvalFieldVariable( %s );", true, FieldVariable);
+	DecompilerOut("// OP_EvalFieldVariableRef( \"%s\" ); (%s)", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)), FieldExpression);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	StackPush<char*>(FieldVariable, type_decompiled_string);
+	StackPush<char*>(FieldExpression, type_decompiled_string);
 
 	currentPos = GET_ALIGNED_WORD(currentPos) + 2;
 
@@ -831,8 +834,8 @@ DEF_DECOMPILE(EvalFieldVariableRef)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FieldVariable = (char*)(gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 	char* FieldOwner = GetStringForCurrentObject();
+	char* FieldVariable = (char*)(gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 
 	if (opcode_dec) {
 	DecompilerOut("// OP_EvalFieldVariableRef( \"%s\" ); (%s.%s)", true, FieldVariable, FieldOwner, FieldVariable);
@@ -852,8 +855,8 @@ DEF_DECOMPILE(ClearFieldVariable)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FieldVariable = (char*)(gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 	char* FieldOwner = GetStringForCurrentObject();
+	char* FieldVariable = (char*)(gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
 
 	if (opcode_dec) {
 	DecompilerOut("// OP_ClearFieldVariable( \"%s\" );", true, gscBuffer + *(WORD*)(GET_ALIGNED_WORD(currentPos)));
@@ -1011,17 +1014,13 @@ DEF_DECOMPILE(ScriptFunctionCall)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
+	char* FunctionName = get_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))));
 	
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptFunctionCall( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
-	}
-	
-	if (*(BYTE*)currentPos != 0) // delete later
-	{
-		cout << "OMG LULZ SCRIPTFUNCTIONCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
-		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
@@ -1039,8 +1038,10 @@ DEF_DECOMPILE(ScriptFunctionCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)StackGetValue(0));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptFunctionCallPointer( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
@@ -1063,17 +1064,13 @@ DEF_DECOMPILE(ScriptMethodCall)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
-	}
-	
-	if (*(BYTE*)currentPos != 0) // delete later
-	{
-		cout << "OMG LULZ METHODTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
-		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
@@ -1091,8 +1088,10 @@ DEF_DECOMPILE(ScriptMethodCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)StackGetValue(0));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodCallPointer( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
@@ -1115,17 +1114,13 @@ DEF_DECOMPILE(ScriptThreadCall)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
-	}
-
-	if (*(BYTE*)currentPos != 0) // delete later
-	{
-		cout << "OMG LULZ SCRIPTTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
-		cin.get();
 	}
 
 	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
@@ -1143,8 +1138,10 @@ DEF_DECOMPILE(ScriptThreadCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)StackGetValue(0));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptThreadCallPointer( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
@@ -1167,20 +1164,16 @@ DEF_DECOMPILE(ScriptMethodThreadCall)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)(gscBuffer + *(DWORD*)(GET_ALIGNED_DWORD(currentPos + 1))));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodThreadCall( %d, \"%s\" );", true, *(BYTE*)currentPos, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
 	}
 
-	if (*(BYTE*)currentPos != 0) // delete later
-	{
-		cout << "OMG LULZ SCRIPTMETHODTHREADCALL HAS %d DIFFERENT LOLZ LULZ LILZ" << endl;
-		cin.get();
-	}
-
-	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4; // show byte...?
+	currentPos = GET_ALIGNED_DWORD(currentPos + 1) + 4;
 
 	call_decompile(FunctionName, true, NULL, false, true, true, *(BYTE*)(currentPos) == OP_DecTop);
 
@@ -1195,8 +1188,10 @@ DEF_DECOMPILE(ScriptMethodThreadCallPointer)
 	BYTE* currentPos = opcodesPtr;
 	currentPos += 1; // opcode size 1 byte
 
-	char* FunctionName = funcname_prepend_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
-	
+	char* FunctionName = get_gscOfFunction((char*)StackGetValue(0), (DWORD)opcodesPtr - gscBuffer);
+	if (!FunctionName)
+		FunctionName = MallocAndSprintf("%s", (char*)StackGetValue(0));
+
 	if (opcode_dec) {
 	DecompilerOut("// OP_ScriptMethodThreadCallPointer( \"%s\" );", true, FunctionName);
 	WriteRegisterInfo(currentPos - 1);
@@ -1910,6 +1905,24 @@ DEF_DECOMPILE(GetHash)
 	StackPush<char*>(hash, type_decompiled_string);
 
 	currentPos = GET_ALIGNED_DWORD(currentPos) + 4;
+
+	opcodesPtr = currentPos;
+}
+
+// 0x5D
+DEF_DECOMPILE(realwait)
+{
+	BYTE* currentPos = opcodesPtr;
+	currentPos += 1; // opcode size 1 byte
+	
+	if (opcode_dec) {
+	DecompilerOut("// OP_realwait();", true);
+	WriteRegisterInfo(currentPos - 1);
+	}
+
+	DecompilerOut("realwait( %s );\n", true, (char*)StackGetValue(0));
+
+	StackPop();
 
 	opcodesPtr = currentPos;
 }

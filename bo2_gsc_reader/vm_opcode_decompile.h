@@ -56,7 +56,7 @@ private:
 	char* GetStringForEscapeSequenceByte(char byte);
 	char* GetStringForCurrentObject();
 
-	char* funcname_prepend_gscOfFunction(char* functionName, DWORD ip);
+	char* get_gscOfFunction(char* functionName, DWORD ip);
 	void waittill_call_decompile(char* functionName, BYTE* currentPos);
 	void call_decompile(char* functionName, bool hasPrecodepos, DWORD _numOfParameters, bool pointerCall, bool methodCall, bool threadCall, bool resultUnused);
 
@@ -162,6 +162,7 @@ private:
 	DECL_DECOMPILE(endswitch);							// 0x5A
 	DECL_DECOMPILE(vector);								// 0x5B
 	DECL_DECOMPILE(GetHash);							// 0x5C
+	DECL_DECOMPILE(realwait);							// 0x5D
 	DECL_DECOMPILE(GetSimpleVector);					// 0x5E
 	DECL_DECOMPILE(isdefined);							// 0x5F
 	DECL_DECOMPILE(vectorscale);						// 0x60
